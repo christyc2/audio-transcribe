@@ -1,0 +1,8 @@
+# Dependency directories
+venv/
+
+# IDE-specific files
+.vscode/
+
+# OS-specific files
+.DS_Store
