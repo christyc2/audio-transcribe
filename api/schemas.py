@@ -1,3 +1,7 @@
+"""
+Pydantic models for the API
+"""
+
 from pydantic import BaseModel
 
 class Token(BaseModel):
@@ -11,7 +15,7 @@ class TokenData(BaseModel):
 class User(BaseModel):
     username: str
     password: str
-    disabled: bool | None = None
+    disabled: bool = False
 
 class UserInDB(User):
     hashed_password: str

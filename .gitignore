@@ -1,8 +1,5 @@
-# Dependency directories
-venv/
-
-# IDE-specific files
-.vscode/
-
-# OS-specific files
+.venv/
+__pycache__/
+api/.env
 .DS_Store
+.cursor/

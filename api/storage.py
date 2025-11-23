@@ -1,23 +1,45 @@
+"""
+User storage functions and temporary in-memory database
+"""
+
+from fastapi import HTTPException
 from schemas import *
+
+__all__ = ["get_user", "create_user", "user_exists"]
+
 # [get_user] retrieves the user from the database if they are registered.
-# [db] is the database, [username] is the provided username
-def get_user(db, username: str):
+# [db] is the in memory database, [username] is the provided username
+def get_user(username: str):
     if username in db:
         user_data = db[username]
         # Initialize UserInDB model
         return UserInDB(**user_data)
 
-def create_user(db, user: User):
-    if get_user(db, user.username):
+# [create_user] creates a new user in the database. Raises an exception if the username already exists.
+def create_user(user: User):
+    # Lazy import to avoid circular dependency
+    from auth import get_password_hash
+    
+    if get_user(user.username):
         raise HTTPException(status_code=400, detail="Username already exists")
     # add user to database (store hashed password, not plain password)
+    # disabled defaults to False in User schema, but ensure it's explicitly False for new users
+    disabled = user.disabled if user.disabled is not None else False
     db[user.username] = {
         "username": user.username,
         "password": user.password,
         "hashed_password": get_password_hash(user.password),
-        "disabled": user.disabled if user.disabled is not None else False
+        "disabled": disabled
     }
-    return {"message": "User registered successfully", "db": db[user.username]}
+    # Return User model matching the response_model
+    return User(
+        username=user.username,
+        password=user.password,
+        disabled=disabled
+    )
+
+def user_exists(username: str):
+    return username in db
 
 db = {
     "test_user": {
