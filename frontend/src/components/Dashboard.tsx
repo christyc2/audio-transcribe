@@ -17,7 +17,7 @@ export const Dashboard = () => {
       fetchProfile()
         .then((profile) => setUser(profile))
         .catch(() => {
-          /* handled by RequireAuth */
+          // handled by RequireAuth
         });
     }
   }, [setUser, user]);

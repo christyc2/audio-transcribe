@@ -18,7 +18,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   useEffect(() => {
     hydrate().catch(() => {
-      /* swallow errors; store already handles state */
+      // swallow errors. store already handles state
     });
   }, [hydrate]);
 

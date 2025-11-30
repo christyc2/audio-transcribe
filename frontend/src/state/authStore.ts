@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import {
   fetchProfile,
   loginUser,
-  type LoginPayload,
+//   type LoginPayload,
   type UserProfile,
 } from '../api/auth';
 import { setAccessToken } from '../api/client';
@@ -14,7 +14,7 @@ export interface AuthState {
   accessToken: string | null;
   status: AuthStatus;
   error?: string;
-  login: (credentials: LoginPayload) => Promise<void>;
+  login: (credentials: UserProfile) => Promise<void>;
   logout: () => void;
   hydrate: () => Promise<void>;
   setUser: (user: UserProfile | null) => void;
@@ -27,7 +27,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   accessToken: null,
   status: 'idle',
   error: undefined,
-  login: async (credentials: LoginPayload) => {
+  login: async (credentials: UserProfile) => {
     set({ status: 'loading', error: undefined });
     try {
       const token = await loginUser(credentials);

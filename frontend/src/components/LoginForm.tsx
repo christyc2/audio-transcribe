@@ -64,7 +64,7 @@ export const LoginForm = () => {
       />
       <FormError message={error} />
       <FormButton type="submit" loading={isSubmitting}>
-        Sign in
+        Log in
       </FormButton>
     </form>
   );

@@ -17,7 +17,9 @@ export const setAccessToken = (token: string | null) => {
   accessToken = token;
 };
 
-// Create an instance of axios with the base URL of the API, and set the headers to json
+/* Create an instance of axios with the base URL of the API, and set the headers to json.
+   This api instance will be used to make requests to the api
+*/
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL ?? '/api', // should read API base URL from .env
   headers: {
@@ -36,7 +38,7 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (response: AxiosResponse) => response, // success handler
   (error: AxiosError) => { // error handler
-    // if server responded with HTTP 401, reject the promise with AuthError('Unauthorized', 401)
+    // If server responded with HTTP 401, reject the promise with AuthError('Unauthorized', 401)
     if (error.response?.status === 401) {
       return Promise.reject(new AuthError('Unauthorized', 401));
     }

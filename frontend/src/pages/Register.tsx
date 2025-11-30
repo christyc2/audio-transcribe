@@ -8,7 +8,7 @@ const Register = () => (
       <p className="mt-1 text-sm text-slate-400">
         Already registered?{' '}
         <Link to="/login" className="text-sky-400 hover:text-sky-300">
-          Sign in
+           Log in
         </Link>
       </p>
       <div className="mt-6">
