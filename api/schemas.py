@@ -15,9 +15,13 @@ class TokenData(BaseModel):
 class User(BaseModel):
     username: str
     password: str
-    disabled: bool = False
+    disabled: bool | None = None
 
 class UserInDB(User):
     hashed_password: str
 
-    
+class Job(BaseModel):
+    job_id: str
+    filename: str
+    status: str
+    transcript: str | None = None

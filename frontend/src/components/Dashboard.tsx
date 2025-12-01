@@ -1,16 +1,22 @@
-import { useEffect, useState } from 'react';
+import { type ChangeEvent, type FormEvent, useEffect, useState } from 'react';
+import { fetchProfile } from '../api/auth';
 import {
-  fetchProfile,
-  fetchUserItems,
-  type UserItem,
-} from '../api/auth';
+  fetchUserJobs,
+  uploadJob,
+  type UserJob,
+} from '../api/jobs';
 import { useAuth } from './AuthProvider';
+
+const MAX_UPLOAD_BYTES = 5 * 1024 * 1024;
 
 export const Dashboard = () => {
   const { user, setUser } = useAuth();
-  const [items, setItems] = useState<UserItem[]>([]);
-  const [itemsError, setItemsError] = useState<string | null>(null);
-  const [itemsLoading, setItemsLoading] = useState(false);
+  const [jobs, setJobs] = useState<UserJob[]>([]);
+  const [jobsError, setJobsError] = useState<string | null>(null);
+  const [jobsLoading, setJobsLoading] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
 
   useEffect(() => {
     if (!user) {
@@ -22,24 +28,69 @@ export const Dashboard = () => {
     }
   }, [setUser, user]);
 
-  const loadItems = async () => {
-    setItemsLoading(true);
-    setItemsError(null);
+  const loadJobs = async () => {
+    setJobsLoading(true);
+    setJobsError(null);
     try {
-      const data = await fetchUserItems();
-      setItems(data);
+      const data = await fetchUserJobs();
+      setJobs(data);
     } catch (error) {
-      setItemsError(
-        error instanceof Error ? error.message : 'Unable to load items.',
+      setJobsError(
+        error instanceof Error ? error.message : 'Unable to load jobs.',
       );
     } finally {
-      setItemsLoading(false);
+      setJobsLoading(false);
     }
   };
 
   useEffect(() => {
-    loadItems();
+    loadJobs();
   }, []);
+
+  const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
+    setUploadError(null);
+    const file = event.target.files?.[0];
+    if (!file) {
+      setSelectedFile(null);
+      return;
+    }
+
+    if (file.size > MAX_UPLOAD_BYTES) {
+      setUploadError('File is too large. Please select a file smaller than 5MB.');
+      setSelectedFile(null);
+      return;
+    }
+
+    setSelectedFile(file);
+  };
+
+  const handleUploadSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!selectedFile) {
+      setUploadError('Please choose an audio file to upload.');
+      return;
+    }
+
+    if (selectedFile.size > MAX_UPLOAD_BYTES) {
+      setUploadError('File is too large. Please select a file smaller than 5MB.');
+      return;
+    }
+
+    setIsUploading(true);
+    setUploadError(null);
+
+    try {
+      await uploadJob(selectedFile);
+      setSelectedFile(null);
+      await loadJobs();
+    } catch (error) {
+      setUploadError(
+        error instanceof Error ? error.message : 'Unable to upload file.',
+      );
+    } finally {
+      setIsUploading(false);
+    }
+  };
 
   return (
     <div className="mx-auto w-full max-w-4xl px-4 py-10 text-white">
@@ -56,34 +107,82 @@ export const Dashboard = () => {
       </section>
 
       <section className="mt-8 rounded-2xl border border-slate-800 bg-slate-900/60 p-6 shadow-xl shadow-slate-900/40">
-        <div className="flex items-center justify-between">
-          <h2 className="text-xl font-semibold">Your items</h2>
+        <h2 className="text-xl font-semibold">Upload audio</h2>
+        <p className="mt-2 text-sm text-slate-400">
+          Audio files only, up to 5MB.
+        </p>
+        <form
+          onSubmit={handleUploadSubmit}
+          className="mt-4 flex flex-col gap-4 rounded-xl border border-dashed border-slate-700 p-4"
+        >
+          <input
+            type="file"
+            accept="audio/*"
+            onChange={handleFileChange}
+            className="text-sm text-slate-300 file:mr-4 file:rounded-md file:border-0 file:bg-sky-500 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:bg-sky-400"
+            disabled={isUploading}
+          />
+          {selectedFile ? (
+            <p className="text-xs text-slate-400">
+              Selected: {selectedFile.name} ({(selectedFile.size / 1024 / 1024).toFixed(2)} MB)
+            </p>
+          ) : null}
+          {uploadError ? (
+            <p className="text-sm text-red-400">{uploadError}</p>
+          ) : null}
           <button
-            onClick={loadItems}
-            className="text-sm font-semibold text-sky-400 transition hover:text-sky-300"
-            disabled={itemsLoading}
+            type="submit"
+            className="w-fit rounded-md bg-sky-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-sky-400 disabled:cursor-not-allowed disabled:opacity-60"
+            disabled={isUploading}
           >
-            {itemsLoading ? 'Refreshing...' : 'Refresh'}
+            {isUploading ? 'Uploading…' : 'Upload file'}
+          </button>
+        </form>
+      </section>
+
+      <section className="mt-8 rounded-2xl border border-slate-800 bg-slate-900/60 p-6 shadow-xl shadow-slate-900/40">
+        <div className="flex items-center justify-between">
+          <h2 className="text-xl font-semibold">Your jobs</h2>
+          <button
+            onClick={loadJobs}
+            className="text-sm font-semibold text-sky-400 transition hover:text-sky-300 disabled:cursor-not-allowed disabled:opacity-60"
+            disabled={jobsLoading}
+          >
+            {jobsLoading ? 'Refreshing…' : 'Refresh'}
           </button>
         </div>
-        {itemsError ? (
-          <p className="mt-4 text-sm text-red-400">{itemsError}</p>
+        {jobsError ? (
+          <p className="mt-4 text-sm text-red-400">{jobsError}</p>
         ) : (
-          <ul className="mt-4 grid gap-3 md:grid-cols-2">
-            {items.map((item) => (
+          <ul className="mt-4 space-y-4">
+            {jobs.map((job) => (
               <li
-                key={item.item_id}
+                key={job.job_id}
                 className="rounded-xl border border-slate-800 bg-slate-950/40 p-4"
               >
-                <p className="text-lg font-semibold">{item.item_id}</p>
-                <p className="text-sm text-slate-400">Owner: {item.owner}</p>
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div>
+                    <p className="text-lg font-semibold">{job.filename}</p>
+                  </div>
+                  <span className="rounded-full border border-slate-700 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-slate-200">
+                    {job.status}
+                  </span>
+                </div>
+                <div className="mt-4 rounded-lg border border-slate-800 bg-slate-950/60 p-3">
+                  <p className="text-xs font-semibold uppercase text-slate-400">
+                    Transcript
+                  </p>
+                  <p className="mt-2 text-sm text-slate-100">
+                    {job.transcript ?? 'Transcription pending…'}
+                  </p>
+                </div>
               </li>
             ))}
           </ul>
         )}
-        {!itemsError && !itemsLoading && items.length === 0 ? (
+        {!jobsError && !jobsLoading && jobs.length === 0 ? (
           <p className="mt-4 text-sm text-slate-400">
-            No items yet. Trigger any protected API call to see data appear.
+            No jobs yet. Upload an audio file to get started.
           </p>
         ) : null}
       </section>

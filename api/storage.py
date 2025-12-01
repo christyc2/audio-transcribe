@@ -23,7 +23,6 @@ def create_user(user: User):
     if get_user(user.username):
         raise HTTPException(status_code=400, detail="Username already exists")
     # add user to database (store hashed password, not plain password)
-    # disabled defaults to False in User schema, but ensure it's explicitly False for new users
     disabled = user.disabled if user.disabled is not None else False
     db[user.username] = {
         "username": user.username,

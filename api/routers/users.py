@@ -3,10 +3,13 @@ Use APIRouter for protected user endpoints
 """
 
 import sys, os
+from typing import List
+
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, File, UploadFile, status
 from schemas import *
 from auth import *
+from jobs import create_job, list_jobs
 
 router = APIRouter(prefix="/users", tags=["users"])
 
@@ -21,6 +24,14 @@ async def read_users_me(current_user: UserInDB = Depends(get_current_active_user
         disabled=current_user.disabled
     )
 
-@router.get("/me/items/")
-async def read_own_items(current_user: UserInDB = Depends(get_current_active_user)):
-    return [{"item_id": "test item", "owner": current_user.username}]
+@router.get("/me/jobs/", response_model=List[Job])
+async def read_jobs(current_user: UserInDB = Depends(get_current_active_user)):
+    return list_jobs(current_user.username)
+
+
+@router.post("/me/jobs/", response_model=Job, status_code=status.HTTP_201_CREATED)
+async def upload_job(
+    file: UploadFile = File(...),
+    current_user: UserInDB = Depends(get_current_active_user),
+):
+    return await create_job(current_user.username, file)

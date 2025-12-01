@@ -11,11 +11,6 @@ export interface UserProfile {
   disabled?: boolean | null;
 }
 
-export interface UserItem {
-  item_id: string;
-  owner: string;
-}
-
 export const registerUser = async (payload: UserProfile) => {
   const { data } = await api.post<UserProfile>('/auth/register', payload);
   return data;
@@ -36,11 +31,6 @@ export const loginUser = async (payload: UserProfile) => {
 
 export const fetchProfile = async () => {
   const { data } = await api.get<UserProfile>('/users/me/');
-  return data;
-};
-
-export const fetchUserItems = async () => {
-  const { data } = await api.get<UserItem[]>('/users/me/items/');
   return data;
 };
 

@@ -16,6 +16,7 @@ function App() {
         <Route
           path="/dashboard"
           element={
+            // RequireAuth checks if the user is authenticated (blocks unauthenticated access)
             <RequireAuth>
               <Dashboard />
             </RequireAuth>
