@@ -1,0 +1,43 @@
+# Project Documentation
+
+## Project Overview
+This will be a fullstack audio transcription project/product/software(?).
+
+Core features:
+- User registration, login/authentication, and JWT authorization.
+
+Tech stack:
+- FastAPI backend
+- React/Vite frontend
+
+System Architecture (what is this?)
+- [how the frontend talks to the backend]
+- [Request/response lifecycle diagram description, including auth token flow]
+
+## FastAPI Backend
+1. Application Bootstrap (`api/main.py`)
+    - Creates a FastAPI instance
+    - Registers the routers
+    - Attaches the middleware so every request passes through the authentication layer 
+2. Data Models & Storage (`schemas.py`, `storage.py`)
+    - Pydantic models defining data types and structures for tokens, users, and jobs
+    - (Currently uses) in-memory user store structure (dictionary)
+    - Helper functions `get_user`, `create_user`, and `user_exists` to prevent access to the in-memory database
+3. Authentication Layer (`auth.py`, `middleware.py`)
+    - Password hashing/verification 
+    - Authenticates user login credentials
+    - JWT (access token) creation and validation (encode/decode with secret key)
+    - Check if a user is active (no need to login & has access to protected api endpoints)
+    - OAuth2PasswordRequestForm extracts the username and password fields from form data in a login requests (standardizes how login endpoint accepts credentials).
+    - OAuth2PasswordBearer class pulls the bearer token (JWT) from Authorization header so protected endpoints can decode the JWT
+    - `middleware.py` intercepts login requests and authenticates the user before reaching login endpoint
+4. Public Auth Routes (`routers/authentication.py`)
+    - Sets up registration and login endpoints
+    - Handles login form data
+5. Protected User Routes (`routers/users.py`)
+    - Sets up protected user endpoint
+    - Defines job creation/upload endpoint
+6. Job Lifecycle (`jobs.py`, `uploads/`)
+    - Validates uploaded file
+    - Persist to `uploads` directory
+    - Creates a new Job object
