@@ -17,6 +17,7 @@ router = APIRouter(prefix="/auth", tags=["authentication"])
 async def register(user: User):
     return create_user(user)
 
+
 # Login endpoint
 # Called when signing in with username and password and return access token (to be used during active duration)
 @router.post("/login", response_model=Token)

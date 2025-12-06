@@ -7,7 +7,7 @@ load_dotenv()
 
 import uvicorn
 from fastapi import FastAPI
-from routers import authentication, users
+from .routers import authentication, users
 from middleware import AuthMiddleware
 
 # Initialize FastAPI object

@@ -33,5 +33,5 @@ async def read_jobs(current_user: UserInDB = Depends(get_current_active_user)):
 async def upload_job(
     file: UploadFile = File(...),
     current_user: UserInDB = Depends(get_current_active_user),
-):
+    ):
     return await create_job(current_user.username, file)

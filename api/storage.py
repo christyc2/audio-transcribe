@@ -22,7 +22,7 @@ def create_user(user: User):
     
     if get_user(user.username):
         raise HTTPException(status_code=400, detail="Username already exists")
-    # add user to database (store hashed password, not plain password)
+    # add user to database
     disabled = user.disabled if user.disabled is not None else False
     db[user.username] = {
         "username": user.username,
@@ -30,7 +30,7 @@ def create_user(user: User):
         "hashed_password": get_password_hash(user.password),
         "disabled": disabled
     }
-    # Return User model matching the response_model
+    # Return User model matching the response_model in the routers/authentication.py file
     return User(
         username=user.username,
         password=user.password,

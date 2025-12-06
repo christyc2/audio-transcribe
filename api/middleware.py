@@ -21,7 +21,7 @@ class AuthMiddleware(BaseHTTPMiddleware):
             username = None
             password = None
             
-            # Try to parse as form data (OAuth2PasswordRequestForm uses form data)
+            # Try to parse username and password from the request body as form data (OAuth2PasswordRequestForm uses form data)
             try:
                 # Parse form data manually from body with URL decoding
                 body_str = body.decode('utf-8')
@@ -57,6 +57,7 @@ class AuthMiddleware(BaseHTTPMiddleware):
                     raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, 
                                 detail="Could not validate credentials", headers={"WWW-Authenticate": "Bearer"})
             
+            # If username and password are valid, continue to the login endpoint
             return await call_next(request)
         # [await] pause execution a coroutine until an "awaitable" object completes its operation and returns a result.
         # need [await] get a coroutine object instead of the response.

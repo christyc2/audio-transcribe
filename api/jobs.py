@@ -14,7 +14,7 @@ ALLOWED_CONTENT_PREFIX = "audio/"
 # In-memory store for jobs (job_id -> job record)
 jobs_db: Dict[str, dict] = {}
 
-# [create_job] validates the uploaded file and returns its job record.
+# [create_job] validates the uploaded file and returns a Job object.
 async def create_job(owner: str, file: UploadFile) -> Job:
    
     if not file.content_type or not file.content_type.startswith(ALLOWED_CONTENT_PREFIX):
