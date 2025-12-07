@@ -99,6 +99,9 @@ Other Notes:
 - The dashboard lists jobs (filename, status, transcript text) via `GET /users/me/jobs/`.
 
 ## TODO: Asynchronous Task Scheduling (Celery + Redis)
+- celery : add to queue & worker consumes when ready
+- redis queue - broker
+- redis job store: store jobs. provides helper functions to add, get, and update jobs
 
 ## End-to-End Workflows
 - Registration: frontend form → `/auth/register` → storage update.
@@ -108,4 +111,5 @@ Other Notes:
 - Error states (invalid token, oversized file) and how each layer responds.
 
 ## Next Steps
+- Add persistent database (Postgres)
 - Migrate authStore.ts to redux (optional but could be good)
