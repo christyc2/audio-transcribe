@@ -43,11 +43,49 @@ System Architecture (what is this?)
     - Creates a new Job object
 
 ## React Frontend
+1. Build & Entry Points (`frontend/src/main.tsx`, `App.tsx`)
+    - BrowserRouter setup, layout shell, routing table.
+    - `main.tsx` renders React app. React creates a single page application (SPA) by default. When the navigates to a different page via a router, the user is technically still on that one page, it's just that the React components in the `<App />` changes (js replaces the content on the screen). Note: This is different from classic webpages.
+    - `App.tsx`
+
+2. API Client Layer (`frontend/src/api`)
+    - `client.ts` creates an Axios instance (with the base URL of the API) and registers request/response interceptors (similar to middleware). Also provides `setAccessToken` helper function to update/clear the stored token and an `AuthError` class for authentication errors.
+    - `auth.ts` redirects frontend registration and login requests to the corresponding api endpoints. It also provides `fetchProfile` helper function to fetch user credentials (note: user authentication is checked before calling `fetchProfile`).
+    - `jobs.ts` provides helper functions to interact with the jobs API endpoints. `uploadJob` uploads a new job to the backend and `fetchUserJobs` fetches the user's list of jobs.
+    - **Check understanding -- why we use Axios:** Because React components only run in the browser, it must send a POST request to FastAPI endpoints (e.g., for registration). We use an Axios instance to simplify handling HTTP requests for all components. The Axios instance takes care of attaching the base API URL, JSON headers, error handling, and parsing payload into POST request.
+
+3. Auth State Management (`state/authStore.ts`, `components/AuthProvider.tsx`)
+    - `AuthProvider.tsx` exposes the auth store data to all children components, who can call `userAuth()` to easily access authentication states from auth store. This is more convenient than passing props (typed data?) to child components every time.
+    - **Check understanding -- authStore (`state/authStore.ts`)**: the store is holds observable data about the user, status, error, and access token so that any React components can access them and automatically re-render when a state changes (e.g., authentication status). `authStore` also defined actions that can be called by components, such as `login`, `logout`, `hydrate`, and `setUser`. The implementation of these actions in the auth store ensure that the brower's `localStorage`, the auth store, and the module-level access token variable are all updated accordingly when an action handler is called. In short, the auth store centalizes user authentication states and action handlers for the React components to use.
+    - **Check understanding -- context:** the context encapsulates all the authentication states (e.g., user, status, accesstoken, etc.) that later components may use. 
+
+4. Route Guards & Navigation (`components/RequireAuth.tsx`, `NavBar.tsx`)
+    - `NavBar.tsx` renders the navigation bar. If user is authenticated, it renders the username and links to the dashboard and to logout. Otherwise, it provides links to login and register.
+    - `RequestAuth.tsx` checks if the user is authenticated at current route level and redirects to the login page if not. It is used to protect routes that require authentication.
+
+5. General Reusable I/O Components 
+    - `FormError.tsx` is a wrapper for defining how registration and login form error messages are rendered
+    - `FormButton.tsx` defines registration and login form submission button and what is outputted on submit 
+    - `TextField.tsx` defines a reusable text input component
+    - `PasswordField.tsx` wraps `TextField` but adds a show/hide password toggle (with button and a `showPassword` state)
+
+6. Registration and Login Forms
+    - `RegisterForm.tsx` defines the inputs and rendering of registration form, verifies the valid registration credentials, and creates new user via helper function that uses Axios instance to send registration post request to FastAPI backend
+    - `LoginForm.tsx` TODO
+    - `Login.tsx` is a `LoginForm` wrapper that details how to render the login page, provides an option to redirect to register page, and conditionally shows successful registration if rerouted from registration.
+    - `Register.tsx` is a `RegisterForm` wrapper that details how to render the registration page and provides an option to redirect to login page.
+
+6. Dashboard Experience (`components/Dashboard.tsx`)
+    - Renders the dashboard page with the user's profile, list of jobs, and file upload form. 
+    - Requests a new job to be created in the backend each time a new file is uploaded via the helper function (Axios instance).
+    - Includes profile fetching, job refresh, upload form UX, state transitions.
+<!-- 7. Styling
+    - Tailwind usage, CSS entry points, asset pipeline. -->
+Other Notes:
 - Use typescript (statically typed) over javascript (dynamically typed), so more safety
 - Everything in `frontend/src/` is the React application code. Files outside `src` are config files
 - Vite framework helps optimize compilation
 - `index.html` contains HTML tag, a headtag with some metadata, and executes `main.tsx`
-- `main.tsx` renders React app. React creates a single page application (SPA) by default. When the navigates to a different page via a router, the user is technically still on that one page, it's just that the React components in the `<App />` changes (js replaces the content on the screen). Note: This is different from classic webpages.
 - React uses declarative programming (vs. imperative programming), so no need to explain every step, only declares what to show. React updates the virtual DOM tree when a state changes, compares with old DOM, and only updates changes.
 - In normal CSS, set a class (or className in React) on an element. In `App.css`, there are selectors for the classes for styling. Tailwindcss provides utility classes to simplify styling, so no need for `App.css`.
 - Components: encapsulated, reuseable parts of UI (and can contain its own logic )
@@ -59,27 +97,12 @@ System Architecture (what is this?)
 - Authenticated uploads post `multipart/form-data` to `/users/me/jobs/` (audio files ≤5 MB). Job metadata + transcript placeholder will be returned and shown on the dashboard.
 - The dashboard lists jobs (filename, status, transcript text) via `GET /users/me/jobs/`.
 
-Components:
-- `FormError.tsx` is a wrapper for defining how registration and login form error messages are rendered
-- `FormButton.tsx` defines registration and login form submission button and what is outputted on submit 
-- `TextField.tsx` defines a reusable text input component
-- `PasswordField.tsx` wraps `TextField` but adds a show/hide password toggle (with button and a `showPassword` state)
-- `RegisterForm.tsx` defines the inputs and rendering of registration form, verifies the valid registration credentials, and creates new user via helper function that uses Axios instance to send registration post request to FastAPI backend
-- `LoginForm.tsx` 
-- `AuthProvider.tsx` 
-**Check understanding -- context:** the context encapsulates all the authentication states (e.g., user, status, accesstoken, etc.) that later components may use. `AuthProvider` exposes the data to all children components, who can call `userAuth()` to easily access authentication states from auth store. This is more convenient than passing props (typed data?) to child components every time. 
-
-### Axios and API requests
-**Check understanding -- why we use Axios:** Because React components only run in the browser, it must send a POST request to FastAPI endpoints (e.g., for registration). We use an Axios instance to simplify handling HTTP requests for all components. The Axios instance takes care of attaching the base API URL, JSON headers, error handling, and parsing payload into POST request.
-- `auth.ts` redirects frontend registration and login requests to the corresponding api endpoints. TODO: does `fetchProfile` check authorization? because it tries to access a protected endpoint
-
-### State
-**Check understanding -- authStore (`state/authStore.ts`)**: the store is holds observable data about the user, status, error, and access token so that any React components can access them and automatically re-render when a state changes (e.g., authentication status). `authStore` also defined actions that can be called by components, such as `login`, `logout`, `hydrate`, and `setUser`. The implementation of these actions in the auth store ensure that the brower's `localStorage`, the auth store, and the module-level access token variable are all updated accordingly when an action handler is called. In short, the auth store centalizes user authentication states and action handlers for the React components to use.
-
-### Pages
-- `Login.tsx` is a `LoginForm` wrapper that details how to render the login page, provides an option to redirect to register page, and conditionally shows successful registration if rerouted from registration.
-- `Register.tsx` is a `RegisterForm` wrapper that details how to render the registration page and provides an option to redirect to login page.
-
+## End-to-End Workflows
+- Registration: frontend form → `/auth/register` → storage update.
+- Login: credential submission, middleware check, JWT issuance, client persistence.
+- Authenticated calls: token injection via Axios interceptor, `/users/me/` guard chain.
+- Audio upload & job listing: upload constraints, backend validation, dashboard refresh cycle.
+- Error states (invalid token, oversized file) and how each layer responds.
 
 ## Next Steps
 - Migrate authStore.ts to redux (optional but could be good)
