@@ -1,6 +1,6 @@
-/* Store the authentication state in the browser's local storage for easy ___ across page reloads*/
+/* Store the authentication state in the browser's local storage for persistence across page reloads*/
 
-import { create } from 'zustand'; // try using redux
+import { create } from 'zustand'; 
 import {fetchProfile, loginUser, type UserProfile} from '../api/auth';
 import { setAccessToken } from '../api/client';
 
