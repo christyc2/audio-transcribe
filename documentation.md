@@ -9,6 +9,7 @@ Core features:
 Tech stack:
 - FastAPI backend
 - React/Vite/Tailwindcss frontend
+- Asynchronous task scheduling with Celery and Redis
 
 System Architecture (what is this?)
 - [how the frontend talks to the backend -- frontend uses Axios instance to make HTTP requests to backend]
@@ -96,6 +97,8 @@ Other Notes:
 - Login submits `username/password` via `application/x-www-form-urlencoded` to `/auth/login` and receives a JWT.
 - Authenticated uploads post `multipart/form-data` to `/users/me/jobs/` (audio files ≤5 MB). Job metadata + transcript placeholder will be returned and shown on the dashboard.
 - The dashboard lists jobs (filename, status, transcript text) via `GET /users/me/jobs/`.
+
+## TODO: Asynchronous Task Scheduling (Celery + Redis)
 
 ## End-to-End Workflows
 - Registration: frontend form → `/auth/register` → storage update.
