@@ -4,7 +4,6 @@ import Register from './pages/Register';
 import { RequireAuth } from './components/RequireAuth';
 import { Dashboard } from './components/Dashboard';
 import { NavBar } from './components/NavBar';
-// import './App.css'; // no need for App.css since Tailwindcss is used
 
 // js function used to create React components
 function App() {

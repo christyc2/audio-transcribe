@@ -7,6 +7,7 @@ import { FormButton } from './FormButton';
 import { FormError } from './FormError';
 import { useAuth } from './AuthProvider';
 
+
 export const LoginForm = () => {
   const { login } = useAuth();
   const navigate = useNavigate();
@@ -30,12 +31,12 @@ export const LoginForm = () => {
       if (isAxiosError(err)) {
         const detail =
           err.response?.data?.detail ??
-          err.response?.data?.message ??
-          'Incorrect username or password.';
+          err.response?.data?.message ?? 
+          'Invalid username or password.'
         setError(
           typeof detail === 'string'
             ? detail
-            : 'Incorrect username or password.',
+            : 'Unable to sign in.',
         );
       } else {
         setError(err instanceof Error ? err.message : 'Unable to sign in.');
