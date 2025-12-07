@@ -4,27 +4,23 @@ import Register from './pages/Register';
 import { RequireAuth } from './components/RequireAuth';
 import { Dashboard } from './components/Dashboard';
 import { NavBar } from './components/NavBar';
-import './App.css';
+// import './App.css'; // no need for App.css since Tailwindcss is used
 
+// js function used to create React components
 function App() {
+
+  // the returned JSX is what is rendered to the screen
   return (
     <div className="min-h-screen bg-slate-950 text-white">
       <NavBar />
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
-        <Route
-          path="/dashboard"
-          element={
-            // RequireAuth checks if the user is authenticated (blocks unauthenticated access)
-            <RequireAuth>
-              <Dashboard />
-            </RequireAuth>
-          }
-        />
+        {/* RequireAuth checks if the user is authenticated (blocks unauthenticated access) */}
+        <Route path="/dashboard" element={<RequireAuth><Dashboard /></RequireAuth>} />
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
         <Route path="*" element={<Navigate to="/login" replace />} />
-      </Routes>
+      </Routes> 
     </div>
   );
 }

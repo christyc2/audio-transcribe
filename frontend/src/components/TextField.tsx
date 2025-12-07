@@ -1,3 +1,4 @@
+// TextField.tsx is a reusable text input component that can be used in the application
 import { forwardRef, type InputHTMLAttributes } from 'react';
 
 interface TextFieldProps extends InputHTMLAttributes<HTMLInputElement> {
@@ -5,6 +6,9 @@ interface TextFieldProps extends InputHTMLAttributes<HTMLInputElement> {
   error?: string;
 }
 
+/* forwardRef is a React hook that allows a component to receive a ref from its parent, but I can 
+later remove the ref and forwardRef wrapper is never used
+*/
 export const TextField = forwardRef<HTMLInputElement, TextFieldProps>(
   ({ label, error, className = '', ...props }, ref) => (
     <label className="flex flex-col gap-1 text-sm font-medium text-slate-200">

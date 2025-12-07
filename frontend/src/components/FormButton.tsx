@@ -12,10 +12,10 @@ export const FormButton = ({
 }: FormButtonProps) => (
   <button
     className={`flex w-full items-center justify-center rounded-md bg-sky-500 px-4 py-2 text-base font-semibold text-white transition hover:bg-sky-400 disabled:cursor-not-allowed disabled:opacity-60 ${className}`}
-    disabled={loading || props.disabled}
+    disabled={loading} 
     {...props}
   >
-    {loading ? 'Please wait…' : children}
+    {loading ? 'Please wait...' : children} {/* if submission in progress, show 'Please wait...' */}
   </button>
 );
 

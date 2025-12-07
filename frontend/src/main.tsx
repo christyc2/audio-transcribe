@@ -9,7 +9,7 @@ createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <BrowserRouter>
       <AuthProvider>
-        <App />
+        <App /> {/* App component is the root component of the React application - the react page that will be rendered */}
       </AuthProvider>
     </BrowserRouter>
   </StrictMode>,

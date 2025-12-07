@@ -8,7 +8,8 @@ import { FormButton } from './FormButton';
 import { FormError } from './FormError';
 
 export const RegisterForm = () => {
-  const navigate = useNavigate();
+  // useNavigate is a React hook that returns a navigate function so components can change the current route from event handlers
+  const navigate = useNavigate();  
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -18,15 +19,17 @@ export const RegisterForm = () => {
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setError(null);
-
+    // check if passwords match
     if (password !== confirmPassword) {
       setError('Passwords must match.');
       return;
     }
-
+    // set isSubmitting is true to disable the submit button and show 'Please wait...'
     setIsSubmitting(true);
     try {
+      // hits register endpoint, which creates a new user
       await registerUser({ username, password });
+      // redirect to login page with if successful registration
       navigate('/login', { replace: true, state: { registered: true } });
     } catch (err) {
       if (isAxiosError(err)) {
@@ -35,10 +38,7 @@ export const RegisterForm = () => {
           err.response?.data?.message ??
           'Unable to register right now.';
         setError(
-          typeof detail === 'string'
-            ? detail
-            : 'Unable to register right now.',
-        );
+          typeof detail === 'string' ? detail : 'Unable to register right now.'); // set error message
       } else {
         setError('Unable to register right now.');
       }

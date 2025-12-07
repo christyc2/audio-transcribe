@@ -10,6 +10,7 @@ import { useAuth } from './AuthProvider';
 export const LoginForm = () => {
   const { login } = useAuth();
   const navigate = useNavigate();
+  // useLocation is a React hook that returns the current location object, which contains the current URL and its parameters
   const location = useLocation();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -17,7 +18,7 @@ export const LoginForm = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+    event.preventDefault(); // React handles form submission different from default, so prevent
     setError(null);
     setIsSubmitting(true);
 

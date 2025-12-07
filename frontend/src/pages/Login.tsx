@@ -3,6 +3,7 @@ import { LoginForm } from '../components/LoginForm';
 
 const Login = () => {
   const location = useLocation();
+  // treat state object like it has registered property, if it exists from the router state, set registered to true
   const registered = Boolean((location.state as { registered?: boolean })?.registered);
 
   return (

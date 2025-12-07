@@ -1,12 +1,13 @@
+/**
+ * Dashboard.tsx is the main component that renders the dashboard page.
+ * It displays the user's profile, the upload form, and the list of jobs.
+ */
 import { type ChangeEvent, type FormEvent, useEffect, useState } from 'react';
 import { fetchProfile } from '../api/auth';
-import {
-  fetchUserJobs,
-  uploadJob,
-  type UserJob,
-} from '../api/jobs';
+import {fetchUserJobs, uploadJob, type UserJob} from '../api/jobs';
 import { useAuth } from './AuthProvider';
 
+// 5MB is the maximum file size for audio uploads
 const MAX_UPLOAD_BYTES = 5 * 1024 * 1024;
 
 export const Dashboard = () => {
@@ -19,15 +20,15 @@ export const Dashboard = () => {
   const [isUploading, setIsUploading] = useState(false);
 
   useEffect(() => {
+    // if user is not authenticated, fetch user profile from backend
     if (!user) {
-      fetchProfile()
-        .then((profile) => setUser(profile))
-        .catch(() => {
-          // handled by RequireAuth
-        });
+      fetchProfile().then((profile) => setUser(profile)).catch(() => {
+        // do nothing because the store already handles state errors
+      });
     }
   }, [setUser, user]);
 
+  // [loadJobs] fetches user jobs from the backend
   const loadJobs = async () => {
     setJobsLoading(true);
     setJobsError(null);
@@ -35,9 +36,7 @@ export const Dashboard = () => {
       const data = await fetchUserJobs();
       setJobs(data);
     } catch (error) {
-      setJobsError(
-        error instanceof Error ? error.message : 'Unable to load jobs.',
-      );
+      setJobsError(error instanceof Error ? error.message : 'Unable to load jobs.')
     } finally {
       setJobsLoading(false);
     }
@@ -47,6 +46,7 @@ export const Dashboard = () => {
     loadJobs();
   }, []);
 
+  // [handleFileChange] adds the selected file to the state (but not yet uploaded)
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
     setUploadError(null);
     const file = event.target.files?.[0];
@@ -55,6 +55,7 @@ export const Dashboard = () => {
       return;
     }
 
+    // check if file is too large before trying to upload
     if (file.size > MAX_UPLOAD_BYTES) {
       setUploadError('File is too large. Please select a file smaller than 5MB.');
       setSelectedFile(null);
@@ -64,6 +65,7 @@ export const Dashboard = () => {
     setSelectedFile(file);
   };
 
+  // [handleUploadSubmit] handles the file upload submission
   const handleUploadSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!selectedFile) {
@@ -71,27 +73,22 @@ export const Dashboard = () => {
       return;
     }
 
-    if (selectedFile.size > MAX_UPLOAD_BYTES) {
-      setUploadError('File is too large. Please select a file smaller than 5MB.');
-      return;
-    }
-
     setIsUploading(true);
     setUploadError(null);
 
+    // try to upload file to backend
     try {
       await uploadJob(selectedFile);
       setSelectedFile(null);
       await loadJobs();
     } catch (error) {
-      setUploadError(
-        error instanceof Error ? error.message : 'Unable to upload file.',
-      );
+      setUploadError(error instanceof Error ? error.message : 'Unable to upload file.')
     } finally {
       setIsUploading(false);
     }
   };
 
+  // specify how to render the dashboard UI
   return (
     <div className="mx-auto w-full max-w-4xl px-4 py-10 text-white">
       <section className="rounded-2xl border border-slate-800 bg-slate-900/60 p-8 shadow-xl shadow-slate-900/40">

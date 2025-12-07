@@ -34,6 +34,7 @@ export const PasswordField = ({
         placeholder={placeholder}
         autoComplete={autoComplete}
       />
+      {/* Button toggles password visibility via setShowPassword */}
       <button
         type="button"
         className="absolute right-3 top-9 text-xs font-semibold uppercase text-sky-400"

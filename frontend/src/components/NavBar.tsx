@@ -1,3 +1,8 @@
+/**
+ * NavBar.tsx is a component that renders the navigation bar at the top of the page.
+ * It is used to navigate between the login, register, and dashboard pages.
+ * It also displays the current user's username and a logout button if the user is authenticated.
+ */
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from './AuthProvider';
 
