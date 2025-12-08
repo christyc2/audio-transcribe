@@ -26,4 +26,7 @@ def transcribe_audio(self, job_id: str, file_path: str):
     job.transcript = result
     update_job(job_id, job)
 
-    return
+    return {
+        "job_id": job_id,
+        "transcript": result
+    }
