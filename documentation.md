@@ -20,10 +20,12 @@ System Architecture (what is this?)
     - Creates a FastAPI app instance
     - Registers the routers
     - Attaches the middleware so every request passes through the authentication layer 
+
 2. Data Models & Storage (`schemas.py`, `storage.py`)
     - Pydantic models defining data types and structures for tokens, users, and jobs
     - (Currently uses) in-memory user store structure (dictionary)
     - Helper functions `get_user`, `create_user`, and `user_exists` to prevent access to the in-memory database
+    
 3. Authentication Layer (`auth.py`, `middleware.py`)
     - Password hashing/verification 
     - Authenticates user login credentials
@@ -32,16 +34,20 @@ System Architecture (what is this?)
     - OAuth2PasswordRequestForm extracts the username and password fields from form data in a login requests (standardizes how login endpoint accepts credentials).
     - OAuth2PasswordBearer class pulls the bearer token (JWT) from Authorization header so protected endpoints can decode the JWT
     - `middleware.py` intercepts login requests and authenticates the user before reaching login endpoint
+
 4. Public Auth Routes (`routers/authentication.py`)
     - Sets up registration and login endpoints
     - Handles login form data
+
 5. Protected User Routes (`routers/users.py`)
     - Sets up protected user endpoint
     - Defines job creation/upload endpoint
+
 6. Job Lifecycle (`jobs.py`)
     - Validates uploaded file
     - Persist to `uploads/` directory
     - Creates a new Job object
+    - Adds the new job to a Redis store
 
 ## React Frontend
 1. Build & Entry Points (`frontend/src/main.tsx`, `App.tsx`)
@@ -80,6 +86,7 @@ System Architecture (what is this?)
     - Renders the dashboard page with the user's profile, list of jobs, and file upload form. 
     - Requests a new job to be created in the backend each time a new file is uploaded via the helper function (Axios instance).
     - Includes profile fetching, job refresh, upload form UX, state transitions.
+    - The dashboard lists jobs (filename, status, transcript text) via `GET /users/me/jobs/`.
 <!-- 7. Styling
     - Tailwind usage, CSS entry points, asset pipeline. -->
 Other Notes:
@@ -96,19 +103,40 @@ Other Notes:
 - define how we handle submissions in `handleSubmit`
 - Login submits `username/password` via `application/x-www-form-urlencoded` to `/auth/login` and receives a JWT.
 - Authenticated uploads post `multipart/form-data` to `/users/me/jobs/` (audio files ≤5 MB). Job metadata + transcript placeholder will be returned and shown on the dashboard.
-- The dashboard lists jobs (filename, status, transcript text) via `GET /users/me/jobs/`.
+- The audio is split into smaller blocks and sent from the server. A progess bar would work by calculating the number of success blocks out of total blocks.
 
-## TODO: Asynchronous Task Scheduling (Celery + Redis)
-- celery : add to queue & worker consumes when ready
-- redis queue - broker
-- redis job store: store jobs. provides helper functions to add, get, and update jobs
 
-## End-to-End Workflows
+## Asynchronous Task Scheduling (Celery + Redis)
+
+- Celery worker (when started) reads from the Redis queue, processes the job, and save results (return value, status, metadata) to Redis backend. **Confusion:** documentation -- "fetch the result using Celery’s API AsyncResult(task_id).get()." I never called this and instead created a separate Redis job store. Was I intended to use AsyncResult in `list_jobs` (in `backend/api/jobs.py`) to return the job list (which is what `GET /users/me/jobs/` uses to provide frontend with details of this user's jobs)?
+
+1. Celery App Configuration (`backend/celery/celery_app.py`)
+    - Defines a Celery application, points the broker and result backend to local Redis server (`redis://localhost:6379/0`)
+        - Celery broker(?): adds queues tasks for workers to consume
+        - Result backend: 
+    - Registers `backend.celery.transcribe` so the worker knows about the transcription tasks
+        - When the API calls transcribe_audio.delay(job_id, path), Celery serializes that task payload and pushes it into the Redis result backend DB
+    - Specifies JSON serialization/deserialization for payloads
+
+2. Redis Roles
+    - Broker: manage the queue of pending jobs for Celery workers will consume
+    - Result backend: the store where Celery workers persist task results/statuses/metadata (?)
+    - Job store (`backend/api/job_store.py`): separate Redis hash space that stores every Job object (i.e., job_id, status, filename, owner, transcript, and stored_filename.) Includes helper functions `add_job`, `get_job`, `update_job`, and `get_all_jobs`.
+
+3. Scheduling Flow (`backend/api/jobs.py`)
+    - After validating and persisting an uploaded file, `create_job` writes the new `Job` record to Redis job store. 
+    - Calls `transcribe_audio.delay(job_id, saved_path)` on the new job, which enqueues a Celery task without blocking the HTTP request. The API responds immediately with the queued job metadata (metadata are updated after the job is processed).
+
+4. Worker Execution (`backend/celery/transcribe.py`)
+    - `transcribe_audio` task fetches the job from Redis job store, marks it `processing`, then processes the task (transcribe).
+    - When done, updates the job status to `completed` and transcript text, stores the Job object back into the Redis hash space so `/users/me/jobs/` reflects the finished result.
+
+<!-- ## End-to-End Workflows
 - Registration: frontend form → `/auth/register` → storage update.
 - Login: credential submission, middleware check, JWT issuance, client persistence.
 - Authenticated calls: token injection via Axios interceptor, `/users/me/` guard chain.
 - Audio upload & job listing: upload constraints, backend validation, dashboard refresh cycle.
-- Error states (invalid token, oversized file) and how each layer responds.
+- Error states (invalid token, oversized file) and how each layer responds. -->
 
 ## Next Steps
 - Add persistent database (Postgres)
