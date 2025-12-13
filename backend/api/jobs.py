@@ -4,13 +4,16 @@ from pathlib import Path
 from typing import List
 from .schemas import Job
 from fastapi import HTTPException, status, UploadFile
-from backend.api.job_store import add_job, get_all_jobs
+from celery.result import AsyncResult
+from backend.celery.transcribe import transcribe_audio
 
 UPLOAD_DIR = Path("uploads")
 UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
 MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024  # 5MB
 ALLOWED_CONTENT_PREFIX = "audio/"
+
+task_id_db = []
 
 # [create_job] validates the uploaded file and returns a Job object.
 async def create_job(owner: str, file: UploadFile) -> Job:
@@ -50,15 +53,24 @@ async def create_job(owner: str, file: UploadFile) -> Job:
         owner=owner,
         stored_filename=stored_filename
     )
-    add_job(job_id, job)
 
-    # Add job_id into Celery queue, which uses Redis as the broker. delay() schedules the job to be executed asynchronously.
-    transcribe_audio.delay(job_id, str(saved_path))
-    # Do not wait for the transcription to complete, return the job record immediately to avoid blocking.
-    # When the transcription is complete, the result will be updated in the database by the worker.
+    """ Add job_id into Celery queue, which uses Redis as the broker. 
+    delay() schedules the job to be executed asynchronously.
+    Returns AsyncResult object that can be used to get the result of the job. 
+    Do not wait for the transcription to complete, return the job record immediately 
+    to avoid blocking. When the transcription is complete, the result will be updated 
+    in the Redis result backend by the worker.
+    """
+    result = transcribe_audio.delay(job_id, str(saved_path), job.model_dump()) 
+    task_id_db.append(result.id)
 
     return job
 
 # [list_jobs] returns all jobs that belong to the given owner
 def list_jobs(owner: str) -> List[Job]:
-    return [job for job in get_all_jobs() if job.owner == owner]
+    # return [job for job in get_all_jobs() if job.owner == owner]
+    jobs = []
+    for task_id in task_id_db:
+        result = transcribe_audio.AsyncResult(task_id)
+        jobs.append(Job.model_validate(result.info.get('job')))
+    return [job for job in jobs if job.owner == owner]

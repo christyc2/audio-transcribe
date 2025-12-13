@@ -12,4 +12,5 @@ celery_app.conf.update(
     task_serializer="json",
     result_serializer="json",
     accept_content=["json"],
+    # result_expires=timedelta(hours=2) # backend result expiration time, default is 1 day
 )

@@ -10,6 +10,7 @@ export interface UserJob {
   filename: string;
   status: string;
   transcript?: string | null;
+  owner: string;
 }
 
 export const uploadJob = async (file: File) => {

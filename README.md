@@ -28,5 +28,5 @@ brew services start redis
 
 Run celery with: 
 ```bash
-celery -A backend.celery.celery_app worker --loglevel=INFO
+celery -A backend.celery.celery_app worker --pool=solo --loglevel=INFO
 ```

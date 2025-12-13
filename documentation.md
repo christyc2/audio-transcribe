@@ -59,11 +59,14 @@ System Architecture (what is this?)
     - `client.ts` creates an Axios instance (with the base URL of the API) and registers request/response interceptors (similar to middleware). Also provides `setAccessToken` helper function to update/clear the stored token and an `AuthError` class for authentication errors.
     - `auth.ts` redirects frontend registration and login requests to the corresponding api endpoints. It also provides `fetchProfile` helper function to fetch user credentials (note: user authentication is checked before calling `fetchProfile`).
     - `jobs.ts` provides helper functions to interact with the jobs API endpoints. `uploadJob` uploads a new job to the backend and `fetchUserJobs` fetches the user's list of jobs.
-    - **Check understanding -- why we use Axios:** Because React components only run in the browser, it must send a POST request to FastAPI endpoints (e.g., for registration). We use an Axios instance to simplify handling HTTP requests for all components. The Axios instance takes care of attaching the base API URL, JSON headers, error handling, and parsing payload into POST request.
+    - Because React components only run in the browser, so it must send a POST request to FastAPI endpoints (e.g., for registration), we use the Axios library. The Axios instance simplifies handling HTTP requests and response for all components. The Axios instance takes care of attaching the base API URL, JSON headers, error handling, and parsing payload into POST request.
 
 3. Auth State Management (`state/authStore.ts`, `components/AuthProvider.tsx`)
-    - `AuthProvider.tsx` exposes the auth store data to all children components, who can call `userAuth()` to easily access authentication states from auth store. This is more convenient than passing props (typed data?) to child components every time.
-    - **Check understanding -- authStore (`state/authStore.ts`)**: the store is holds observable data about the user, status, error, and access token so that any React components can access them and automatically re-render when a state changes (e.g., authentication status). `authStore` also defined actions that can be called by components, such as `login`, `logout`, `hydrate`, and `setUser`. The implementation of these actions in the auth store ensure that the brower's `localStorage`, the auth store, and the module-level access token variable are all updated accordingly when an action handler is called. In short, the auth store centalizes user authentication states and action handlers for the React components to use.
+    - `AuthProvider.tsx` exposes the auth store data to all children components, who can call `useAuth()` to easily access authentication states from auth store. This is more convenient than passing props (typed data?) to child components every time. 
+    - **Check understanding -- authStore (`state/authStore.ts`)**: the store holds **observable** data IN ONE PLACE about the user, status, error, and access token so that any React components can access them and automatically re-render when a state changes (e.g., authentication status). `authStore` also defined actions that can be called by components, such as `login`, `logout`, `hydrate`, and `setUser`. The implementation of these actions in the auth store ensure that the brower's `localStorage`, the auth store, and the module-level access token variable are all updated accordingly when an action handler is called. In short, the auth store centalizes user authentication states and action handlers for the React components to use.
+        - React's before state management system is component level, so storing in one place
+        - Observable so each time there is a state change, it will automatically rerender
+        - Use `localStorage` to keep login session
     - **Check understanding -- context:** the context encapsulates all the authentication states (e.g., user, status, accesstoken, etc.) that later components may use. 
 
 4. Route Guards & Navigation (`components/RequireAuth.tsx`, `NavBar.tsx`)
@@ -105,9 +108,7 @@ Other Notes:
 - Authenticated uploads post `multipart/form-data` to `/users/me/jobs/` (audio files ≤5 MB). Job metadata + transcript placeholder will be returned and shown on the dashboard.
 - The audio is split into smaller blocks and sent from the server. A progess bar would work by calculating the number of success blocks out of total blocks.
 
-
 ## Asynchronous Task Scheduling (Celery + Redis)
-
 - Celery worker (when started) reads from the Redis queue, processes the job, and save results (return value, status, metadata) to Redis backend. **Confusion:** documentation -- "fetch the result using Celery’s API AsyncResult(task_id).get()." I never called this and instead created a separate Redis job store. Was I intended to use AsyncResult in `list_jobs` (in `backend/api/jobs.py`) to return the job list (which is what `GET /users/me/jobs/` uses to provide frontend with details of this user's jobs)?
 
 1. Celery App Configuration (`backend/celery/celery_app.py`)
@@ -120,16 +121,27 @@ Other Notes:
 
 2. Redis Roles
     - Broker: manage the queue of pending jobs for Celery workers will consume
-    - Result backend: the store where Celery workers persist task results/statuses/metadata (?)
-    - Job store (`backend/api/job_store.py`): separate Redis hash space that stores every Job object (i.e., job_id, status, filename, owner, transcript, and stored_filename.) Includes helper functions `add_job`, `get_job`, `update_job`, and `get_all_jobs`.
+    - Result backend: the store where Celery workers persist task results/statuses/metadata
+    <!-- - Job store (`backend/api/job_store.py`): separate Redis hash space that stores every Job object (i.e., job_id, status, filename, owner, transcript, and stored_filename.) Includes helper functions `add_job`, `get_job`, `update_job`, and `get_all_jobs`. -->
+    - Redis acts as cache so it allows for faster data retrieval than from persistent database (in-memory)
+        - Using redis hash store is an optimization method
+        - But must ensure data consistency with database
+        - Redis does not guarantee persistence
 
 3. Scheduling Flow (`backend/api/jobs.py`)
-    - After validating and persisting an uploaded file, `create_job` writes the new `Job` record to Redis job store. 
-    - Calls `transcribe_audio.delay(job_id, saved_path)` on the new job, which enqueues a Celery task without blocking the HTTP request. The API responds immediately with the queued job metadata (metadata are updated after the job is processed).
+    - After validating and persisting an uploaded file, `create_job` calls `transcribe_audio.delay()` on the new job and stores the Celery task id into an in-memory list
+    - Calling `transcribe_audio.delay()` on the new job enqueues a Celery task without blocking the HTTP request. The API responds immediately with the queued job metadata (metadata are updated during and after the job is processed).
 
 4. Worker Execution (`backend/celery/transcribe.py`)
     - `transcribe_audio` task fetches the job from Redis job store, marks it `processing`, then processes the task (transcribe).
-    - When done, updates the job status to `completed` and transcript text, stores the Job object back into the Redis hash space so `/users/me/jobs/` reflects the finished result.
+    - When done, updates the Redis backend metadata with status `completed` and transcript text, so `/users/me/jobs/` can reflect the finished result.
+
+# Faster Whisper Audio Transcription
+- https://github.com/SYSTRAN/faster-whisper?tab=readme-ov-file
+
+
+
+
 
 <!-- ## End-to-End Workflows
 - Registration: frontend form → `/auth/register` → storage update.
