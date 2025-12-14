@@ -109,7 +109,6 @@ Other Notes:
 - The audio is split into smaller blocks and sent from the server. A progess bar would work by calculating the number of success blocks out of total blocks.
 
 ## Asynchronous Task Scheduling (Celery + Redis)
-- Celery worker (when started) reads from the Redis queue, processes the job, and save results (return value, status, metadata) to Redis backend. **Confusion:** documentation -- "fetch the result using Celery’s API AsyncResult(task_id).get()." I never called this and instead created a separate Redis job store. Was I intended to use AsyncResult in `list_jobs` (in `backend/api/jobs.py`) to return the job list (which is what `GET /users/me/jobs/` uses to provide frontend with details of this user's jobs)?
 
 1. Celery App Configuration (`backend/celery/celery_app.py`)
     - Defines a Celery application, points the broker and result backend to local Redis server (`redis://localhost:6379/0`)
@@ -122,10 +121,11 @@ Other Notes:
 2. Redis Roles
     - Broker: manage the queue of pending jobs for Celery workers will consume
     - Result backend: the store where Celery workers persist task results/statuses/metadata
+        - If server restarts, result backend is cleared
     <!-- - Job store (`backend/api/job_store.py`): separate Redis hash space that stores every Job object (i.e., job_id, status, filename, owner, transcript, and stored_filename.) Includes helper functions `add_job`, `get_job`, `update_job`, and `get_all_jobs`. -->
     - Redis acts as cache so it allows for faster data retrieval than from persistent database (in-memory)
         - Using redis hash store is an optimization method
-        - But must ensure data consistency with database
+        - If using hash store, then must ensure data consistency with database
         - Redis does not guarantee persistence
 
 3. Scheduling Flow (`backend/api/jobs.py`)
@@ -136,8 +136,14 @@ Other Notes:
     - `transcribe_audio` task fetches the job from Redis job store, marks it `processing`, then processes the task (transcribe).
     - When done, updates the Redis backend metadata with status `completed` and transcript text, so `/users/me/jobs/` can reflect the finished result.
 
+5. Accessing Jobs with AsyncResult
+    - Celery worker (when started) reads from the Redis queue, processes the job, and save results (return value, status, metadata) to Redis backend to be updated and accessed. 
+    - In `list_jobs` (in `backend/api/jobs.py`), use AsyncResult to fetch and return the job list (which is what `GET /users/me/jobs/` uses to provide frontend with details of this user's jobs)
+
 # Faster Whisper Audio Transcription
-- https://github.com/SYSTRAN/faster-whisper?tab=readme-ov-file
+    - Celery worker uses faster whisper model to transcribe task and updates the redis backend result metadata with the transcribed text for future access
+    - The whisper model is loaded once and stored in a global variable when the worker processes its first task
+    - https://github.com/SYSTRAN/faster-whisper?tab=readme-ov-file
 
 
 
