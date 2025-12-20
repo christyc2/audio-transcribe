@@ -115,62 +115,83 @@ export const Dashboard = () => {
 
   // specify how to render the dashboard UI
   return (
-    <div className="mx-auto w-full max-w-4xl px-4 py-10 text-white">
-      <section className="rounded-2xl border border-slate-800 bg-slate-900/60 p-8 shadow-xl shadow-slate-900/40">
-        <h1 className="text-3xl font-semibold">Welcome back</h1>
-        <p className="mt-2 text-slate-400">
-          {user ? `Signed in as ${user.username}` : 'Fetching profile...'}
-        </p>
-        {user?.disabled ? (
-          <p className="mt-2 text-sm text-amber-300">
-            Your account is currently disabled.
+    <div className="flex min-h-screen overflow-y-auto">
+      <div className={`mx-auto w-full max-w-4xl px-4 py-10 text-white transition-all duration-300 ${jobsVisible ? 'w-1/2' : 'w-full'} overflow-auto`}>
+        
+        <section className="rounded-2xl border border-slate-800 bg-slate-900/60 p-8 shadow-xl shadow-slate-900/40">
+          <h1 className="text-3xl font-semibold">Welcome back</h1>
+          <p className="mt-2 text-slate-400">
+            {user ? `Signed in as ${user.username}` : 'Fetching profile...'}
           </p>
-        ) : null}
-      </section>
-
-      <section className="mt-8 rounded-2xl border border-slate-800 bg-slate-900/60 p-6 shadow-xl shadow-slate-900/40">
-        <h2 className="text-xl font-semibold">Upload audio</h2>
-        <p className="mt-2 text-sm text-slate-400">
-          Audio files only, up to 5MB.
-        </p>
-        <form
-          onSubmit={handleUploadSubmit}
-          className="mt-4 flex flex-col gap-4 rounded-xl border border-dashed border-slate-700 p-4"
-        >
-          <input
-            type="file"
-            accept="audio/*"
-            onChange={handleFileChange}
-            className="text-sm text-slate-300 file:mr-4 file:rounded-md file:border-0 file:bg-sky-500 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:bg-sky-400"
-            disabled={isUploading}
-          />
-          {selectedFile ? (
-            <p className="text-xs text-slate-400">
-              Selected: {selectedFile.name} ({(selectedFile.size / 1024 / 1024).toFixed(2)} MB)
+          {user?.disabled ? (
+            <p className="mt-2 text-sm text-amber-300">
+              Your account is currently disabled.
             </p>
           ) : null}
-          {uploadError ? (
-            <p className="text-sm text-red-400">{uploadError}</p>
-          ) : null}
-          <button
-            type="submit"
-            className="w-fit rounded-md bg-sky-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-sky-400 disabled:cursor-not-allowed disabled:opacity-60"
-            disabled={isUploading}
-          >
-            {isUploading ? 'Uploading…' : 'Upload file'}
-          </button>
-        </form>
-      </section>
+        </section>
 
-      {jobsVisible && (
-        <div className="mt-8 rounded-2xl border border-slate-800 bg-slate-900/60 p-6 shadow-xl shadow-slate-900/40">
-          <button 
-          type="button" 
-          onClick={() => {setShowJobsButton(true); setJobsVisible(false)}}
-          className={`mb-4 flex w-full items-center justify-center rounded-md bg-sky-500 px-4 py-2 text-base font-semibold text-white transition hover:bg-sky-400 disabled:cursor-not-allowed disabled:opacity-60`}
+        <section className="mt-8 rounded-2xl border border-slate-800 bg-slate-900/60 p-6 shadow-xl shadow-slate-900/40">
+          <h2 className="text-xl font-semibold">Upload audio</h2>
+          <p className="mt-2 text-sm text-slate-400">
+            Audio files only, up to 5MB.
+          </p>
+          <form
+            onSubmit={handleUploadSubmit}
+            className="mt-4 flex flex-col gap-4 rounded-xl border border-dashed border-slate-700 p-4"
           >
-            Hide jobs
-          </button>
+            <input
+              type="file"
+              accept="audio/*"
+              onChange={handleFileChange}
+              className="text-sm text-slate-300 file:mr-4 file:rounded-md file:border-0 file:bg-sky-500 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:bg-sky-400"
+              disabled={isUploading}
+            />
+            {selectedFile ? (
+              <p className="text-xs text-slate-400">
+                Selected: {selectedFile.name} ({(selectedFile.size / 1024 / 1024).toFixed(2)} MB)
+              </p>
+            ) : null}
+            {uploadError ? (
+              <p className="text-sm text-red-400">{uploadError}</p>
+            ) : null}
+            <button
+              type="submit"
+              className="w-fit rounded-md bg-sky-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-sky-400 disabled:cursor-not-allowed disabled:opacity-60"
+              disabled={isUploading}
+            >
+              {isUploading ? 'Uploading…' : 'Upload file'}
+            </button>
+          </form>
+        </section>
+        <section className="mt-8">
+      {showJobsButton && (
+        <button
+          type="button"
+          onClick={() => {setShowJobsButton(false); setJobsVisible(true)}}
+          className={`mx-auto flex w-1/2 items-center justify-center rounded-md bg-sky-500 px-4 py-2 text-base font-semibold text-white transition hover:bg-sky-400 disabled:cursor-not-allowed disabled:opacity-60`}
+        >
+          Show jobs
+        </button>
+      )}
+      {!showJobsButton && (
+        <button
+          type="button"
+          onClick={() => {setShowJobsButton(true); setJobsVisible(false)}}
+          className={`mx-auto flex w-1/2 items-center justify-center rounded-md bg-sky-500 px-4 py-2 text-base font-semibold text-white transition hover:bg-sky-400 disabled:cursor-not-allowed disabled:opacity-60`}
+        >
+          Hide jobs
+        </button>
+      )}
+      </section>
+      </div>
+
+
+      {/* Jobs section */}
+      {jobsVisible && (
+        <div className={`mx-auto w-full max-w-4xl px-4 py-10 text-white transition-all duration-300 ${
+          jobsVisible ? 'w-1/2 opacity-100' : 'w-full opacity-0'
+          }`}>
+          <section className="rounded-2xl border border-slate-800 bg-slate-900/60 p-8 shadow-xl shadow-slate-900/40">
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-semibold">Your jobs</h2>
           </div>
@@ -208,19 +229,9 @@ export const Dashboard = () => {
               No jobs yet. Upload an audio file to get started.
             </p>
           ) : null}
+        </section>
         </div>
       )}
-      <section className="mt-8">
-      {showJobsButton && (
-        <button
-          type="button"
-          onClick={() => {setShowJobsButton(false); setJobsVisible(true)}}
-          className={`flex w-full items-center justify-center rounded-md bg-sky-500 px-4 py-2 text-base font-semibold text-white transition hover:bg-sky-400 disabled:cursor-not-allowed disabled:opacity-60`}
-        >
-          Show jobs
-        </button>
-      )}
-      </section>
     </div>
   );
 };
