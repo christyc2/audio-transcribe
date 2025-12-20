@@ -12,12 +12,15 @@ const MAX_UPLOAD_BYTES = 5 * 1024 * 1024;
 
 export const Dashboard = () => {
   const { user, setUser } = useAuth();
-  const [jobs, setJobs] = useState<UserJob[]>([]);
-  const [jobsError, setJobsError] = useState<string | null>(null);
-  const [jobsLoading, setJobsLoading] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [jobs, setJobs] = useState<UserJob[]>([]);
+  const [jobsError, setJobsError] = useState<string | null>(null);
+  const [jobsLoading, setJobsLoading] = useState(false);
+  const [jobsVisible, setJobsVisible] = useState(false)
+  const [polling, setPolling] = useState(true)
+  const [showJobsButton, setShowJobsButton] = useState(true)
 
   useEffect(() => {
     // if user is not authenticated, fetch user profile from backend
@@ -32,9 +35,23 @@ export const Dashboard = () => {
   const loadJobs = async () => {
     setJobsLoading(true);
     setJobsError(null);
+    if (!showJobsButton){setJobsVisible(true);}
+
     try {
       const data = await fetchUserJobs();
       setJobs(data);
+      for (let job of jobs){
+        if (job.status == "completed"){
+          setPolling(false);
+        }
+        else if (job.status == "failed") {
+          setPolling(false);
+          setJobsError("Transcription failed")
+        }
+        else {
+          setPolling(true);
+        }
+      }
     } catch (error) {
       setJobsError(error instanceof Error ? error.message : 'Unable to load jobs.')
     } finally {
@@ -44,6 +61,14 @@ export const Dashboard = () => {
 
   useEffect(() => {
     loadJobs();
+
+    if (!polling) return;
+
+    const interval = window.setInterval(() => {
+      loadJobs();
+    }, 2000);
+
+    return () => window.clearInterval(interval);
   }, []);
 
   // [handleFileChange] adds the selected file to the state (but not yet uploaded)
@@ -137,53 +162,65 @@ export const Dashboard = () => {
         </form>
       </section>
 
-      <section className="mt-8 rounded-2xl border border-slate-800 bg-slate-900/60 p-6 shadow-xl shadow-slate-900/40">
-        <div className="flex items-center justify-between">
-          <h2 className="text-xl font-semibold">Your jobs</h2>
-          <button
-            onClick={loadJobs}
-            className="text-sm font-semibold text-sky-400 transition hover:text-sky-300 disabled:cursor-not-allowed disabled:opacity-60"
-            disabled={jobsLoading}
+      {jobsVisible && (
+        <div className="mt-8 rounded-2xl border border-slate-800 bg-slate-900/60 p-6 shadow-xl shadow-slate-900/40">
+          <button 
+          type="button" 
+          onClick={() => {setShowJobsButton(true); setJobsVisible(false)}}
+          className={`mb-4 flex w-full items-center justify-center rounded-md bg-sky-500 px-4 py-2 text-base font-semibold text-white transition hover:bg-sky-400 disabled:cursor-not-allowed disabled:opacity-60`}
           >
-            {jobsLoading ? 'Refreshing…' : 'Refresh'}
+            Hide jobs
           </button>
-        </div>
-        {jobsError ? (
-          <p className="mt-4 text-sm text-red-400">{jobsError}</p>
-        ) : (
-          <ul className="mt-4 space-y-4">
-            {jobs.map((job) => (
-              <li
-                key={job.job_id}
-                className="rounded-xl border border-slate-800 bg-slate-950/40 p-4"
-              >
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <div>
-                    <p className="text-lg font-semibold">{job.filename}</p>
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-semibold">Your jobs</h2>
+          </div>
+          {jobsError ? (
+            <p className="mt-4 text-sm text-red-400">{jobsError}</p>
+          ) : (
+            <ul className="mt-4 space-y-4">
+              {jobs.map((job) => (
+                <li
+                  key={job.job_id}
+                  className="rounded-xl border border-slate-800 bg-slate-950/40 p-4"
+                >
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div>
+                      <p className="text-lg font-semibold">{job.filename}</p>
+                    </div>
+                    <span className="rounded-full border border-slate-700 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-slate-200">
+                      {job.status}
+                    </span>
                   </div>
-                  <span className="rounded-full border border-slate-700 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-slate-200">
-                    {job.status}
-                  </span>
-                </div>
-                <div className="mt-4 rounded-lg border border-slate-800 bg-slate-950/60 p-3">
-                  <p className="text-xs font-semibold uppercase text-slate-400">
-                    Transcript
-                  </p>
-                  <p className="mt-2 text-sm text-slate-100">
-                    {job.transcript ?? 'Transcription pending…'}
-                  </p>
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
-        {!jobsError && !jobsLoading && jobs.length === 0 ? (
-          <p className="mt-4 text-sm text-slate-400">
-            No jobs yet. Upload an audio file to get started.
-          </p>
-        ) : null}
+                  <div className="mt-4 rounded-lg border border-slate-800 bg-slate-950/60 p-3">
+                    <p className="text-xs font-semibold uppercase text-slate-400">
+                      Transcript
+                    </p>
+                    <p className="mt-2 text-sm text-slate-100">
+                      {job.transcript ?? 'Transcription pending…'}
+                    </p>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+          {!jobsError && !jobsLoading && jobs.length === 0 ? (
+            <p className="mt-4 text-sm text-slate-400">
+              No jobs yet. Upload an audio file to get started.
+            </p>
+          ) : null}
+        </div>
+      )}
+      <section className="mt-8">
+      {showJobsButton && (
+        <button
+          type="button"
+          onClick={() => {setShowJobsButton(false); setJobsVisible(true)}}
+          className={`flex w-full items-center justify-center rounded-md bg-sky-500 px-4 py-2 text-base font-semibold text-white transition hover:bg-sky-400 disabled:cursor-not-allowed disabled:opacity-60`}
+        >
+          Show jobs
+        </button>
+      )}
       </section>
     </div>
   );
 };
-

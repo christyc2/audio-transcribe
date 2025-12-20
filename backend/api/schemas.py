@@ -3,7 +3,7 @@ Pydantic models for the API
 """
 
 from pydantic import BaseModel
-from typing import Literal
+# from typing import Literal
 
 class Token(BaseModel):
     access_token: str

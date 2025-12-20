@@ -13,7 +13,9 @@ UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024  # 5MB
 ALLOWED_CONTENT_PREFIX = "audio/"
 
-task_id_db = []
+# Track celery tasks alongside the originating Job so we can surface metadata
+# even before the worker has populated result.info.
+job_task_id_map = dict()
 
 # [create_job] validates the uploaded file and returns a Job object.
 async def create_job(owner: str, file: UploadFile) -> Job:
@@ -62,15 +64,45 @@ async def create_job(owner: str, file: UploadFile) -> Job:
     in the Redis result backend by the worker.
     """
     result = transcribe_audio.delay(job_id, str(saved_path), job.model_dump()) 
-    task_id_db.append(result.id)
+
+    job_task_id_map[job_id] = {"task_id": result.id, "job": job}
 
     return job
 
 # [list_jobs] returns all jobs that belong to the given owner
 def list_jobs(owner: str) -> List[Job]:
-    # return [job for job in get_all_jobs() if job.owner == owner]
     jobs = []
-    for task_id in task_id_db:
+    for job_id, entry in job_task_id_map.items():
+        task_id = entry.get("task_id")
+        base_job = entry.get("job")
         result = transcribe_audio.AsyncResult(task_id)
-        jobs.append(Job.model_validate(result.info.get('job')))
+        jobs.append(Job.model_validate(result.info.get('job')) if result.info else base_job)
+
     return [job for job in jobs if job.owner == owner]
+
+def map_celery_state(state: str) -> str:
+    return {
+        "PENDING": "uploaded",
+        "STARTED": "processing",
+        "SUCCESS": "completed",
+        "FAILURE": "failed",
+    }.get(state, "unknown")
+
+def get_job(job_id: str) -> dict:
+    task_id = job_task_id_map.get(job_id, None)
+    if not task_id:
+        raise HTTPException(status_code=404, detail="Job not found")
+    result = transcribe_audio.AsyncResult(task_id)
+    status = map_celery_state(result.state)
+    if status == "completed":
+        return result.info.get('job')
+    if status == "failure":
+        return {
+            "job_id": job_id,
+            "status": status,
+            "error": str(result.result)
+        }
+    return {
+        "job_id": job_id,
+        "status": status
+    }
