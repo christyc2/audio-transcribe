@@ -162,6 +162,8 @@ Improvement: Move from in-memory stores to durable Postgres database.
     - Postgres as the backing datastore 
         - Using`psycopg2` Python’s synchronous PostgreSQL library
         - The standard database that is widely used -- fast, open source, concurrent, reliable, efficient
+        - SQL is used to CRUD data and join data based on relations
+        - SQL only works for relational databases -- tables
     - Connecting it all: SQLAlchemy models define the database schema (structure, data types, nullable values) with the `Job` model. Alembic autogenerates migration scripts from the ORM models. The migrations apply changes to the Postgres database, so that the code and database stay in sync.
         
 2. Configuration
@@ -189,9 +191,11 @@ Improvement: Move from in-memory stores to durable Postgres database.
     - Celery worker updates job row status/transcript as processing completes
     - Dashboard polling reads jobs via ORM queries (previously read from Redis/in-memory)
 
-<!-- 7. Local Dev Notes
-    - Run Postgres locally (docker or host install); ensure user/role matches connection string.
-    - Seed data/fixtures if needed; tests can use a temp database or transactional rollbacks. -->
+7. TODO: Add Foreign Key
+    - New declarative base `Users`
+    - A new user table that maintains `Users` models
+    - Replace the `owner` column in the job table with their corresponding `user` id
+    - Use SQLAlchemy to join instead of `LEFT JOIN users ON job.id = user.id`
 
 
 <!-- ## End-to-End Workflows

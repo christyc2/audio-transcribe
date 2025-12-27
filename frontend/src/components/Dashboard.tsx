@@ -105,7 +105,6 @@ export const Dashboard = () => {
     try {
       await uploadJob(selectedFile);
       setSelectedFile(null);
-      await loadJobs();
     } catch (error) {
       setUploadError(error instanceof Error ? error.message : 'Unable to upload file.')
     } finally {
