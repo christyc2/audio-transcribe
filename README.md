@@ -13,6 +13,7 @@ Run the frontend with:
 
 ```bash
 source .venv/bin/activate
+cd frontend
 npm run dev
 ```
 
@@ -27,6 +28,7 @@ brew services start redis
 ```
 
 Run celery with: 
+
 ```bash
 celery -A backend.celery.celery_app worker --pool=solo --loglevel=INFO
 ```

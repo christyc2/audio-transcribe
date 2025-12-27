@@ -3,10 +3,11 @@ Use APIRouter for protected user endpoints
 """
 
 from typing import List
-from fastapi import APIRouter, Depends, File, UploadFile, status
+from fastapi import APIRouter, Depends, File, UploadFile, status, Depends
 from ..schemas import *
 from ..auth import *
 from ..jobs import create_job, list_jobs, get_job
+from backend.database.database import SessionLocal, get_db 
 
 router = APIRouter(prefix="/users", tags=["users"])
 
@@ -22,19 +23,20 @@ async def read_users_me(current_user: UserInDB = Depends(get_current_active_user
     )
 
 @router.get("/me/jobs/", response_model=List[Job])
-async def read_jobs(current_user: UserInDB = Depends(get_current_active_user)):
-    return list_jobs(current_user.username)
+async def read_jobs(
+    current_user: UserInDB = Depends(get_current_active_user),
+    db: SessionLocal = Depends(get_db)
+):
+    return list_jobs(current_user.username, db)
 
 @router.post("/me/jobs/", response_model=Job, status_code=status.HTTP_201_CREATED)
 async def upload_job(
     file: UploadFile = File(...),
     current_user: UserInDB = Depends(get_current_active_user),
+    db: SessionLocal = Depends(get_db)
     ):
-    return await create_job(current_user.username, file)
+    return await create_job(current_user.username, file, db)
 
 @router.get("/me/jobs/{job_id}/", response_model=Job)
 async def return_job(job_id: str, current_user: UserInDB = Depends(get_current_active_user)):
-    job_result = get_job(job_id)
-    if job_result["status"] == "completed":
-        ____ = Job.model_validate(job_result) #TODO
-        
+    return get_job(job_id)

@@ -26,6 +26,7 @@ class Job(BaseModel):
     job_id: str
     filename: str
     status: str
-    transcript: str
+    transcript: str | None = None
     owner: str
     stored_filename: str
+    error_message: str | None = None

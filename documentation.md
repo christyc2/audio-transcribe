@@ -145,8 +145,53 @@ Other Notes:
     - The whisper model is loaded once and stored in a global variable when the worker processes its first task
     - https://github.com/SYSTRAN/faster-whisper?tab=readme-ov-file
 
+# Utilizing Polling for Updates
+1. Polling to check for job updates
+    - Check for job updates by polling every 2 seconds
+    - Implemented with React useEffect()
+        - use useEffect() hook to (1) make network request to api backend and (2) manage the poll interval timer that needs to be created when the Dashboard component mounts and cleared when it unmounts.
+    - Using `react-window` to only render/re-render the items currently in the user's visible area, which improves performance and keeps the total number of rendered element constant and minimal
+
+## Persistent Database
+Improvement: Move from in-memory stores to durable Postgres database.
+1. Components
+    - SQLAlchemy ORM for database models, engine, and session management. It offers easy ways to query and update its objects.
+        - An engine object is a factory that can create new database connections and holds onto connections inside of a Connection Pool for fast reuse.
+        - The Session establishes all conversations with the database, like a “holding zone” for all the objects loaded or associated with it during its lifespan. ORM models are maintained by a Session such that when an attribute is modified in the Python program, the Seesion records the change event that is generated.
+    - Alembic for database schema migrations and version history
+    - Postgres as the backing datastore 
+        - Using`psycopg2` Python’s synchronous PostgreSQL library
+        - The standard database that is widely used -- fast, open source, concurrent, reliable, efficient
+    - Connecting it all: SQLAlchemy models define the database schema (structure, data types, nullable values) with the `Job` model. Alembic autogenerates migration scripts from the ORM models. The migrations apply changes to the Postgres database, so that the code and database stay in sync.
+        
+2. Configuration
+    - Define `DATABASE_URL=postgresql://user:pass@host:5432/dbname` in env.
+    - Define engine and SessionLocal defined in `backend/database/database.py`
+
+3. Models (`backend/database/model.py`)
+    - Declarative Base holds ORM models (i.e., `Job` with id, filename, status, transcript, owner, stored_filename, error_message, created_at/updated_at).
 
 
+4. Session Lifecycle
+    - SessionLocal dependency (`get_db`) yields a db session per request (open --> use --> commit --> close).
+    - CRUD helpers (e.g., `create_job`, `get_job`, `list_jobs`) take a session to isolate DB access from routers.
+
+5. Migration Workflow (Alembic)
+    - `alembic.ini` targets migrations env; env.py reads `DATABASE_URL`.
+    - `alembic init alembic` to initialize a new Alembic migration environment
+    - `alembic revision --autogenerate -m "message"` to capture model differences between ORM models and the database schema
+        - The database schema is the structured blueprint that defines how data is organized in a database. It is evolved via migrations to keep the database in sync with the ORM models.
+    - `alembic upgrade head` to apply changes 
+    - `alembic downgrade -1` to rollback changes
+
+6. Job Persistence Workflow
+    - Upload request validated and a new `Job` row inserted into `jobs` table with status `uploaded`
+    - Celery worker updates job row status/transcript as processing completes
+    - Dashboard polling reads jobs via ORM queries (previously read from Redis/in-memory)
+
+<!-- 7. Local Dev Notes
+    - Run Postgres locally (docker or host install); ensure user/role matches connection string.
+    - Seed data/fixtures if needed; tests can use a temp database or transactional rollbacks. -->
 
 
 <!-- ## End-to-End Workflows

@@ -2,10 +2,10 @@ import os
 import uuid
 from pathlib import Path
 from typing import List
-from .schemas import Job
-from fastapi import HTTPException, status, UploadFile
-from celery.result import AsyncResult
+from backend.database.model import Job
+from fastapi import HTTPException, status, UploadFile, Depends
 from backend.celery.transcribe import transcribe_audio
+from backend.database.database import SessionLocal, get_db
 
 UPLOAD_DIR = Path("uploads")
 UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
@@ -13,12 +13,10 @@ UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024  # 5MB
 ALLOWED_CONTENT_PREFIX = "audio/"
 
-# Track celery tasks alongside the originating Job so we can surface metadata
-# even before the worker has populated result.info.
-job_task_id_map = dict()
+job_ids: list[str] = []
 
 # [create_job] validates the uploaded file and returns a Job object.
-async def create_job(owner: str, file: UploadFile) -> Job:
+async def create_job(owner: str, file: UploadFile, db: SessionLocal = Depends(get_db)) -> dict:
     from backend.celery.transcribe import transcribe_audio
    
     if not file.content_type or not file.content_type.startswith(ALLOWED_CONTENT_PREFIX):
@@ -48,7 +46,6 @@ async def create_job(owner: str, file: UploadFile) -> Job:
         buffer.write(contents)
 
     job = Job(
-        job_id=job_id,
         filename=original_name,
         status="uploaded",
         transcript="",
@@ -56,6 +53,14 @@ async def create_job(owner: str, file: UploadFile) -> Job:
         stored_filename=stored_filename
     )
 
+    # add the job to the database
+    db.add(job)
+    # commit the transaction
+    db.commit()
+    # After db.commit(), SQLAlchemy expires in‑memory objects, so refresh the job object to get the id
+    db.refresh(job)
+    job_id = str(job.id)
+    
     """ Add job_id into Celery queue, which uses Redis as the broker. 
     delay() schedules the job to be executed asynchronously.
     Returns AsyncResult object that can be used to get the result of the job. 
@@ -63,46 +68,52 @@ async def create_job(owner: str, file: UploadFile) -> Job:
     to avoid blocking. When the transcription is complete, the result will be updated 
     in the Redis result backend by the worker.
     """
-    result = transcribe_audio.delay(job_id, str(saved_path), job.model_dump()) 
+    transcribe_audio.delay(job_id, str(saved_path)) 
 
-    job_task_id_map[job_id] = {"task_id": result.id, "job": job}
-
-    return job
-
-# [list_jobs] returns all jobs that belong to the given owner
-def list_jobs(owner: str) -> List[Job]:
-    jobs = []
-    for job_id, entry in job_task_id_map.items():
-        task_id = entry.get("task_id")
-        base_job = entry.get("job")
-        result = transcribe_audio.AsyncResult(task_id)
-        jobs.append(Job.model_validate(result.info.get('job')) if result.info else base_job)
-
-    return [job for job in jobs if job.owner == owner]
-
-def map_celery_state(state: str) -> str:
-    return {
-        "PENDING": "uploaded",
-        "STARTED": "processing",
-        "SUCCESS": "completed",
-        "FAILURE": "failed",
-    }.get(state, "unknown")
-
-def get_job(job_id: str) -> dict:
-    task_id = job_task_id_map.get(job_id, None)
-    if not task_id:
-        raise HTTPException(status_code=404, detail="Job not found")
-    result = transcribe_audio.AsyncResult(task_id)
-    status = map_celery_state(result.state)
-    if status == "completed":
-        return result.info.get('job')
-    if status == "failure":
-        return {
-            "job_id": job_id,
-            "status": status,
-            "error": str(result.result)
-        }
     return {
         "job_id": job_id,
-        "status": status
+        "filename": original_name,
+        "status": job.status,
+        "transcript": job.transcript,
+        "owner": job.owner,
+        "stored_filename": job.stored_filename,
+        "error_message": job.error_message,
+    }
+
+# [list_jobs] returns all jobs that belong to the given owner
+def list_jobs(owner: str, db: SessionLocal = Depends(get_db)) -> List[dict]:
+    jobs = (
+        db.query(Job)
+        .filter(Job.owner == owner)
+        .order_by(Job.created_at.desc())
+        .all()
+    )
+
+    return [
+        {
+            "job_id": str(job.id),
+            "filename": job.filename,
+            "status": job.status,
+            "transcript": job.transcript,
+            "owner": job.owner,
+            "stored_filename": job.stored_filename,
+            "error_message": job.error_message,
+        }
+        for job in jobs
+    ]
+
+def get_job(job_id: str) -> dict:
+    db = SessionLocal()
+    job = db.query(Job).filter(Job.id == job_id).first()
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+
+    return {
+        "job_id": str(job.id),
+        "filename": job.filename,
+        "status": job.status,
+        "transcript": job.transcript,
+        "owner": job.owner,
+        "stored_filename": job.stored_filename,
+        "error_message": job.error_message,
     }
