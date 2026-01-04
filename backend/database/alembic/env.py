@@ -1,11 +1,18 @@
 import os
+import sys
 from logging.config import fileConfig
+from pathlib import Path
 
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
 
 from alembic import context
 from dotenv import load_dotenv
+
+# Add project root to Python path
+# This allows imports like 'from backend.database.model import Base'
+project_root = Path(__file__).parent.parent.parent.parent
+sys.path.insert(0, str(project_root))
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

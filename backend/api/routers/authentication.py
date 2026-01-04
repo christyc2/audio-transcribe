@@ -4,17 +4,18 @@ Use APIRouter for user registration and login endpoints
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from datetime import timedelta
-from ..schemas import *
-from ..auth import *
-from ..storage import *
+from ..schemas import User, Token
+from ..auth import authenticate_user, create_access_token, ACCESS_TOKEN_EXPIRE_MINUTES
+from ..storage import create_user
 
 router = APIRouter(prefix="/auth", tags=["authentication"])
 
 # Registration endpoint
 @router.post("/register", response_model=User)
 async def register(user: User):
-    return create_user(user)
-
+    new_user = create_user(user)
+    # Return the original user data (not the database object)
+    return user
 
 # Login endpoint
 # Called when signing in with username and password and return access token (to be used during active duration)

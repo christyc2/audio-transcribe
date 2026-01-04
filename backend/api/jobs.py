@@ -2,9 +2,9 @@ import os
 import uuid
 from pathlib import Path
 from typing import List
+from uuid import UUID
 from backend.database.model import Job
 from fastapi import HTTPException, status, UploadFile, Depends
-from backend.celery.transcribe import transcribe_audio
 from backend.database.database import SessionLocal, get_db
 
 UPLOAD_DIR = Path("uploads")
@@ -16,7 +16,7 @@ ALLOWED_CONTENT_PREFIX = "audio/"
 job_ids: list[str] = []
 
 # [create_job] validates the uploaded file and returns a Job object.
-async def create_job(owner: str, file: UploadFile, db: SessionLocal = Depends(get_db)) -> dict:
+async def create_job(owner: UUID, file: UploadFile, db: SessionLocal = Depends(get_db)) -> dict:
     from backend.celery.transcribe import transcribe_audio
    
     if not file.content_type or not file.content_type.startswith(ALLOWED_CONTENT_PREFIX):
@@ -75,13 +75,13 @@ async def create_job(owner: str, file: UploadFile, db: SessionLocal = Depends(ge
         "filename": original_name,
         "status": job.status,
         "transcript": job.transcript,
-        "owner": job.owner,
+        "owner": str(job.owner),
         "stored_filename": job.stored_filename,
         "error_message": job.error_message,
     }
 
 # [list_jobs] returns all jobs that belong to the given owner
-def list_jobs(owner: str, db: SessionLocal = Depends(get_db)) -> List[dict]:
+def list_jobs(owner: UUID, db: SessionLocal = Depends(get_db)) -> List[dict]:
     jobs = (
         db.query(Job)
         .filter(Job.owner == owner)
@@ -95,7 +95,7 @@ def list_jobs(owner: str, db: SessionLocal = Depends(get_db)) -> List[dict]:
             "filename": job.filename,
             "status": job.status,
             "transcript": job.transcript,
-            "owner": job.owner,
+            "owner": str(job.owner),
             "stored_filename": job.stored_filename,
             "error_message": job.error_message,
         }
@@ -104,16 +104,23 @@ def list_jobs(owner: str, db: SessionLocal = Depends(get_db)) -> List[dict]:
 
 def get_job(job_id: str) -> dict:
     db = SessionLocal()
-    job = db.query(Job).filter(Job.id == job_id).first()
-    if not job:
-        raise HTTPException(status_code=404, detail="Job not found")
+    try:
+        try:
+            job_uuid = UUID(job_id)
+        except ValueError:
+            raise HTTPException(status_code=400, detail="Invalid job ID format")
+        job = db.query(Job).filter(Job.id == job_uuid).first()
+        if not job:
+            raise HTTPException(status_code=404, detail="Job not found")
 
-    return {
-        "job_id": str(job.id),
-        "filename": job.filename,
-        "status": job.status,
-        "transcript": job.transcript,
-        "owner": job.owner,
-        "stored_filename": job.stored_filename,
-        "error_message": job.error_message,
-    }
+        return {
+            "job_id": str(job.id),
+            "filename": job.filename,
+            "status": job.status,
+            "transcript": job.transcript,
+            "owner": str(job.owner),
+            "stored_filename": job.stored_filename,
+            "error_message": job.error_message,
+        }
+    finally:
+        db.close()

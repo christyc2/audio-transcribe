@@ -32,3 +32,11 @@ Run celery with:
 ```bash
 celery -A backend.celery.celery_app worker --pool=solo --loglevel=INFO
 ```
+
+Create migrations with Alembic with one of the following:
+
+```bash
+alembic revision --autogenerate -m "message"
+alembic upgrade head
+alembic downgrade -1
+```

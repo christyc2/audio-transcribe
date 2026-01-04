@@ -159,10 +159,10 @@ Improvement: Move from in-memory stores to durable Postgres database.
         - An engine object is a factory that can create new database connections and holds onto connections inside of a Connection Pool for fast reuse.
         - The Session establishes all conversations with the database, like a “holding zone” for all the objects loaded or associated with it during its lifespan. ORM models are maintained by a Session such that when an attribute is modified in the Python program, the Seesion records the change event that is generated.
     - Alembic for database schema migrations and version history
-    - Postgres as the backing datastore 
+    - Postgres as the backing datastore server
         - Using`psycopg2` Python’s synchronous PostgreSQL library
         - The standard database that is widely used -- fast, open source, concurrent, reliable, efficient
-        - SQL is used to CRUD data and join data based on relations
+        - Postgres uses SQL as the primary query language to CRUD data and join data based on relations
         - SQL only works for relational databases -- tables
     - Connecting it all: SQLAlchemy models define the database schema (structure, data types, nullable values) with the `Job` model. Alembic autogenerates migration scripts from the ORM models. The migrations apply changes to the Postgres database, so that the code and database stay in sync.
         
@@ -171,8 +171,9 @@ Improvement: Move from in-memory stores to durable Postgres database.
     - Define engine and SessionLocal defined in `backend/database/database.py`
 
 3. Models (`backend/database/model.py`)
-    - Declarative Base holds ORM models (i.e., `Job` with id, filename, status, transcript, owner, stored_filename, error_message, created_at/updated_at).
-
+    - Declarative Base holds ORM models 
+        - i.e., `Job` with id, filename, status, transcript, owner, stored_filename, error_message, created_at/updated_at.
+    - Declarative Base defines the table structure, when a new job is created, a new ORM model is made based on the defined table columns and types
 
 4. Session Lifecycle
     - SessionLocal dependency (`get_db`) yields a db session per request (open --> use --> commit --> close).

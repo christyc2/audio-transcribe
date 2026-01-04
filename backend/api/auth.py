@@ -8,7 +8,8 @@ from passlib.context import CryptContext
 from jose import JWTError, jwt
 from datetime import datetime, timedelta
 from .storage import get_user
-from .schemas import TokenData, UserInDB
+from .schemas import TokenData
+from backend.database.model import User
 import os
 
 # Initialization
@@ -71,7 +72,7 @@ async def get_current_user(token: str = Depends(oauth_2_scheme)):
     return user
 
 # [get_current_active_user] checks if a current user is active (can login)
-async def get_current_active_user(current_user: UserInDB = Depends(get_current_user)):
+async def get_current_active_user(current_user: User = Depends(get_current_user)):
     if current_user.disabled:
         raise HTTPException(status_code=400, detail="Inactive user")
     return current_user

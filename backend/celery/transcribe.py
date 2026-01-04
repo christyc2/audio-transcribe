@@ -31,7 +31,6 @@ def transcribe_audio(self, job_id: str, file_path: str):
         job.status = "processing"
         job.error_message = None
         db.commit()
-        time.sleep(10)
         # transcribe with Whisper
         segments, info = model.transcribe(file_path, best_of=5) # segments is a generator so the transcription only starts when you iterate over it
         print("Detected language '%s'" % (info.language))
