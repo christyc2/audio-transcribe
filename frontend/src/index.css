@@ -9,7 +9,7 @@
   line-height: 1.5;
   font-weight: 400;
   color: #e2e8f0;
-  background-color: #182a7a;
+  background-color: #4F4F51;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -24,7 +24,7 @@
 body {
   margin: 0;
   min-height: 100vh;
-  background-color: #020617;
+  background: linear-gradient(to bottom, #0a0a0a 0%, #404040 100%);
   color: #e2e8f0;
 }
 

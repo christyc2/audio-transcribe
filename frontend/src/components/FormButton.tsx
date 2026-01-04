@@ -11,7 +11,7 @@ export const FormButton = ({
   ...props
 }: FormButtonProps) => (
   <button
-    className={`flex w-full items-center justify-center rounded-md bg-sky-500 px-4 py-2 text-base font-semibold text-white transition hover:bg-sky-400 disabled:cursor-not-allowed disabled:opacity-60 ${className}`}
+    className={`flex w-full items-center justify-center rounded-md bg-rose-300 px-4 py-2 text-base font-semibold text-neutral-950 transition hover:bg-rose-200 disabled:cursor-not-allowed disabled:opacity-60 ${className}`}
     disabled={loading} 
     {...props}
   >

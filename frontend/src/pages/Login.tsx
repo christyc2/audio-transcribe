@@ -7,17 +7,17 @@ const Login = () => {
   const registered = Boolean((location.state as { registered?: boolean })?.registered);
 
   return (
-    <div className="min-h-screen bg-slate-950 px-4 py-12 text-white">
-      <div className="mx-auto w-full max-w-md rounded-2xl border border-slate-800 bg-slate-900/60 p-8 shadow-xl shadow-slate-900/40">
-        <h1 className="text-2xl font-semibold">Log in</h1>
-        <p className="mt-1 text-sm text-slate-400">
+    <div className="min-h-screen bg-neutral-950 px-4 py-12 text-white">
+      <div className="mx-auto w-full max-w-md rounded-2xl border border-rose-300/30 bg-rose-300/20 p-8 shadow-xl shadow-rose-300/20">
+        <h1 className="text-2xl font-semibold text-white">Log in</h1>
+        <p className="mt-1 text-sm text-neutral-400">
           New here?{' '}
-          <Link to="/register" className="text-sky-400 hover:text-sky-300">
+          <Link to="/register" className="text-rose-300 hover:text-rose-200">
             Create an account
           </Link>
         </p>
         {registered ? (
-          <div className="mt-3 rounded-md border border-emerald-500/40 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-300">
+          <div className="mt-3 rounded-md border border-rose-300/40 bg-rose-300/10 px-3 py-2 text-sm text-rose-300">
             Account created! You can log in now.
           </div>
         ) : null}

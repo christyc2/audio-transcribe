@@ -22,26 +22,26 @@ export const NavBar = () => {
   };
 
   return (
-    <header className="border-b border-slate-800 bg-slate-950/80 backdrop-blur">
+    <header className="border-b border-rose-300/20 bg-neutral-950/80 backdrop-blur">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4 text-white">
-        <Link to="/" className="text-lg font-semibold tracking-tight">
+        <Link to="/" className="text-lg font-semibold tracking-tight text-white">
           Audio Transcribe
         </Link>
         <nav className="flex items-center gap-4 text-sm font-medium">
           {status === 'authenticated' && user ? (
             <>
-              <span className="hidden text-slate-400 sm:inline">
+              <span className="hidden text-neutral-400 sm:inline">
                 Signed in as <span className="text-white">{user.username}</span>
               </span>
               <Link
                 to="/dashboard"
-                className="text-sky-400 transition hover:text-sky-300"
+                className="text-rose-300 transition hover:text-rose-200"
               >
                 Dashboard
               </Link>
               <button
                 onClick={handleLogout}
-                className="rounded-md border border-slate-700 px-4 py-1 text-slate-200 transition hover:border-slate-500"
+                className="rounded-md border border-rose-300/40 bg-rose-300/10 px-4 py-1 text-rose-300 transition hover:bg-rose-300/20 hover:text-rose-200"
               >
                 Logout
               </button>
@@ -50,13 +50,13 @@ export const NavBar = () => {
             <>
               <Link
                 to="/login"
-                className="text-sky-400 transition hover:text-sky-300"
+                className="text-rose-300 transition hover:text-rose-200"
               >
                 Login
               </Link>
               <Link
                 to="/register"
-                className="rounded-md border border-slate-700 px-4 py-1 text-slate-200 transition hover:border-slate-500"
+                className="rounded-md border border-rose-300/40 bg-rose-300/10 px-4 py-1 text-rose-300 transition hover:bg-rose-300/20 hover:text-rose-200"
               >
                 Register
               </Link>

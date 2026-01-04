@@ -10,7 +10,7 @@ function App() {
 
   // the returned JSX is what is rendered to the screen
   return (
-    <div className="min-h-screen bg-slate-950 text-white">
+    <div className="min-h-screen text-white" style={{ background: 'linear-gradient(to bottom, #0a0a0a 0%, #404040 100%)' }}>
       <NavBar />
       <Routes>
         <Route path="/login" element={<Login />} />

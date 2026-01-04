@@ -37,7 +37,7 @@ export const PasswordField = ({
       {/* Button toggles password visibility via setShowPassword */}
       <button
         type="button"
-        className="absolute right-3 top-9 text-xs font-semibold uppercase text-sky-400"
+        className="absolute right-3 top-9 text-xs font-semibold uppercase text-rose-300 hover:text-rose-200"
         onClick={() => setShowPassword((prev) => !prev)}
       >
         {showPassword ? 'Hide' : 'Show'}
