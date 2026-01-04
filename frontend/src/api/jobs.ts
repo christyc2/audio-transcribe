@@ -1,10 +1,13 @@
 /**
  * jobs.ts provides helper functions to interact with the jobs API endpoints.
+ * Uses the auto-generated OpenAPI SDK instead of direct axios calls.
  * It provides `uploadJob` helper function to upload a new job to the backend.
  * It also provides `fetchUserJobs` helper function to fetch the list of jobs for the current user.
  */
-import api from './client';
+import { getUsersApi, handleError } from './sdkClient';
+import type { Job } from './sdk';
 
+// Re-export interface for backward compatibility
 export interface UserJob {
   job_id: string;
   filename: string;
@@ -13,23 +16,38 @@ export interface UserJob {
   owner: string;
 }
 
-export const uploadJob = async (file: File) => {
-  // create a new FormData object to send the file to the backend
-  const formData = new FormData();
-  formData.append('file', file);
+// Helper to convert SDK Job type to UserJob interface
+const jobToUserJob = (job: Job): UserJob => ({
+  job_id: job.job_id,
+  filename: job.filename,
+  status: job.status,
+  transcript: job.transcript ?? null,
+  owner: job.owner,
+});
 
-  // send the file to the backend via a POST request in multipart/form-data format
-  const { data } = await api.post<UserJob>('/users/me/jobs/', formData, {
-    headers: { 'Content-Type': 'multipart/form-data' },
-  });
-
-  return data;
+export const uploadJob = async (file: File): Promise<UserJob> => {
+  try {
+    const usersApi = getUsersApi();
+    // The generated method is uploadJobUsersMeJobsPost
+    // It accepts a File directly (handles multipart/form-data internally)
+    const response = await usersApi.uploadJobUsersMeJobsPost(file);
+    const job = response.data as Job;
+    return jobToUserJob(job);
+  } catch (error) {
+    return handleError(error);
+  }
 };
 
 // [fetchUserJobs] fetches the list of jobs for the current user
-export const fetchUserJobs = async () => {
-  // send a GET request to the backend to fetch the list of jobs
-  const { data } = await api.get<UserJob[]>('/users/me/jobs/');
-  return data;
+export const fetchUserJobs = async (): Promise<UserJob[]> => {
+  try {
+    const usersApi = getUsersApi();
+    // The generated method is readJobsUsersMeJobsGet
+    const response = await usersApi.readJobsUsersMeJobsGet();
+    const jobs = (response.data as Job[]) || [];
+    return jobs.map(jobToUserJob);
+  } catch (error) {
+    return handleError(error);
+  }
 };
 

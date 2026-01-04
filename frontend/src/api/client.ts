@@ -1,13 +1,13 @@
 /**
- * client.ts creates an instance of axios with the base URL of the API, and sets the headers to json.
- * It also provides `setAccessToken` helper function to update the stored token, or clear it if token = null.
- * It also provides `AuthError` class to handle authentication errors.
+ * client.ts provides backward compatibility exports for the migration to SDK.
+ * The AuthError class is kept here for use by the SDK wrapper.
+ * setAccessToken is re-exported from sdkClient.ts to maintain existing imports.
+ * 
+ * Note: Direct axios usage has been replaced with the auto-generated OpenAPI SDK.
+ * See sdkClient.ts for the new SDK-based implementation.
  */
 
-import axios, { type AxiosError, type AxiosResponse } from 'axios';
-
-let accessToken: string | null = null;
-
+// AuthError class for handling authentication errors
 export class AuthError extends Error {
   status?: number;
 
@@ -18,46 +18,7 @@ export class AuthError extends Error {
   }
 }
 
-// [setAccessToken] updates the stored token, or clears it if token = null
-export const setAccessToken = (token: string | null) => {
-  accessToken = token;
-};
-
-/* Create an instance of axios with the base URL of the API, and set the headers to json.
-   This api instance will be used to make requests to the FastAPI backend
-*/
-const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL ?? '/api', // should read API base URL from .env
-  headers: {
-    'Content-Type': 'application/json',
-  },
-});
-
-// Axios interceptors are functions that run before and after a request is made.
-/* Every time the frontend calls api.get(...)/api.post(...), this interceptor runs first. 
-If setAccessToken has stored a token, the interceptor injects Authorization: Bearer <token> 
-so protected FastAPI routes see the JWT. */
-api.interceptors.request.use((config) => {
-  if (accessToken) {
-    config.headers = config.headers ?? {};
-    config.headers.Authorization = `Bearer ${accessToken}`;
-  }
-  return config;
-});
-
-/* Every time the frontend receives a response from the backend, this interceptor runs.
-If the backend responds with HTTP 401, the interceptor rejects the promise with 
-AuthError('Unauthorized', 401) (custom error class). */
-api.interceptors.response.use(
-  (response: AxiosResponse) => response, // success handler (returns the response)
-  (error: AxiosError) => { // error handler
-    // If server responded with HTTP 401, reject the promise with AuthError('Unauthorized', 401)
-    if (error.response?.status === 401) {
-      return Promise.reject(new AuthError('Unauthorized', 401));
-    }
-    return Promise.reject(error);
-  },
-);
-
-export default api;
+// Re-export setAccessToken from sdkClient for backward compatibility
+// This allows existing code (like authStore.ts) to continue importing from './client'
+export { setAccessToken } from './sdkClient';
 
