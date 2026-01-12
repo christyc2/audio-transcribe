@@ -5,6 +5,7 @@
  */
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from './AuthProvider';
+import { Button, Flex,AlertDialog } from "@radix-ui/themes";
 
 export const NavBar = () => {
   const { status, user, logout } = useAuth();
@@ -39,12 +40,31 @@ export const NavBar = () => {
               >
                 Dashboard
               </Link>
-              <button
-                onClick={handleLogout}
-                className="rounded-md border border-rose-300/40 bg-rose-300/10 px-4 py-1 text-rose-300 transition hover:bg-rose-300/20 hover:text-rose-200"
-              >
-                Logout
-              </button>
+
+              <AlertDialog.Root>
+                <AlertDialog.Trigger>
+                  <Button className="rounded-md border border-rose-300/40 bg-rose-300/10 px-4 py-1 text-rose-300 transition hover:bg-rose-300/20 hover:text-rose-200">Logout</Button>
+                </AlertDialog.Trigger>
+                <AlertDialog.Content maxWidth="450px">
+                  <AlertDialog.Title>Logout</AlertDialog.Title>
+                  <AlertDialog.Description size="2">
+                    Are you sure you want to logout?
+                  </AlertDialog.Description>
+
+                  <Flex gap="3" mt="4" justify="end">
+                    <AlertDialog.Cancel>
+                      <Button variant="soft" color="gray">
+                        Cancel
+                      </Button>
+                    </AlertDialog.Cancel>
+                    <AlertDialog.Action>
+                      <Button variant="solid" className="rounded-md border border-rose-400/40 bg-rose-400/10 px-4 py-1 text-rose-500 transition hover:bg-rose-500/20 hover:text-rose-400" onClick={handleLogout}>
+                        Logout
+                      </Button>
+                    </AlertDialog.Action>
+                  </Flex>
+                </AlertDialog.Content>
+              </AlertDialog.Root>
             </>
           ) : (
             <>

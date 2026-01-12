@@ -6,6 +6,7 @@ import { type ChangeEvent, type FormEvent, useEffect, useState } from 'react';
 import { fetchProfile } from '../api/auth';
 import {fetchUserJobs, uploadJob, type UserJob} from '../api/jobs';
 import { useAuth } from './AuthProvider';
+import {Blockquote} from "@radix-ui/themes";
 
 // 5MB is the maximum file size for audio uploads
 const MAX_UPLOAD_BYTES = 5 * 1024 * 1024;
@@ -221,9 +222,9 @@ export const Dashboard = () => {
                     <p className="text-xs font-semibold uppercase text-rose-300">
                       Transcript
                     </p>
-                    <p className="mt-2 text-sm text-white">
-                      {job.transcript ?? 'Transcription pending…'}
-                    </p>
+                    <Blockquote className="mt-2 text-sm text-white border-rose-300/30 bg-rose-200/10 p-3">
+                    {job.transcript ?? 'Transcription pending…'}
+                    </Blockquote>
                   </div>
                 </li>
               ))}

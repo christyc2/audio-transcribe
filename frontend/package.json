@@ -11,6 +11,10 @@
     "generate-sdk": "openapi-generator-cli generate -i http://127.0.0.1:8000/openapi.json -g typescript-axios -o src/api/sdk --additional-properties=supportsES6=true,withInterfaces=true,typescriptThreePlus=true"
   },
   "dependencies": {
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.1",
+    "@mui/material": "^7.3.7",
+    "@radix-ui/themes": "^3.2.1",
     "axios": "^1.13.2",
     "bootstrap": "^5.3.8",
     "react": "^19.2.0",
