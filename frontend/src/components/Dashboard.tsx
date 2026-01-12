@@ -6,10 +6,27 @@ import { type ChangeEvent, type FormEvent, useEffect, useState } from 'react';
 import { fetchProfile } from '../api/auth';
 import {fetchUserJobs, uploadJob, type UserJob} from '../api/jobs';
 import { useAuth } from './AuthProvider';
-import {Blockquote} from "@radix-ui/themes";
+import {Blockquote, ScrollArea} from "@radix-ui/themes";
 
 // 5MB is the maximum file size for audio uploads
 const MAX_UPLOAD_BYTES = 5 * 1024 * 1024;
+
+// Calculate scroll area height based on transcript length
+const calculateTranscriptHeight = (transcript: string | null | undefined): number => {
+  if (!transcript || transcript.trim().length === 0) {
+    return 60; // Minimum height for empty transcript
+  }
+  
+  // Base height + proportional height based on character count
+  // Roughly 1px per 3 characters, with min 60px and max 300px
+  const baseHeight = 60;
+  const charCount = transcript.length;
+  const proportionalHeight = Math.floor(charCount / 3);
+  const totalHeight = baseHeight + proportionalHeight;
+  
+  // Clamp between min and max
+  return Math.min(Math.max(totalHeight, 60), 300);
+};
 
 export const Dashboard = () => {
   const { user, setUser } = useAuth();
@@ -222,9 +239,11 @@ export const Dashboard = () => {
                     <p className="text-xs font-semibold uppercase text-rose-300">
                       Transcript
                     </p>
-                    <Blockquote className="mt-2 text-sm text-white border-rose-300/30 bg-rose-200/10 p-3">
-                    {job.transcript ?? 'Transcription pending…'}
-                    </Blockquote>
+                    <ScrollArea type="always" scrollbars="vertical" style={{ height: calculateTranscriptHeight(job.transcript) }}>
+                          <Blockquote className="mt-2 text-sm text-white border-rose-300/30 p-3">
+                          {job.transcript}
+                          </Blockquote>
+                    </ScrollArea>
                   </div>
                 </li>
               ))}

@@ -48,7 +48,7 @@ async def create_job(owner: UUID, file: UploadFile, db: SessionLocal = Depends(g
     job = Job(
         filename=original_name,
         status="uploaded",
-        transcript="",
+        transcript="Transcription pending…",
         owner=owner,
         stored_filename=stored_filename
     )
