@@ -12,7 +12,7 @@ uvicorn backend.api.main:app --reload
 Run the frontend with:
 
 ```bash
-source .venv/bin/activate
+# source .venv/bin/activate
 cd frontend
 npm run dev
 ```

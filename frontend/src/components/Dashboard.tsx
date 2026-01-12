@@ -14,18 +14,18 @@ const MAX_UPLOAD_BYTES = 5 * 1024 * 1024;
 // Calculate scroll area height based on transcript length
 const calculateTranscriptHeight = (transcript: string | null | undefined): number => {
   if (!transcript || transcript.trim().length === 0) {
-    return 60; // Minimum height for empty transcript
+    return 40; // Minimum height for empty transcript
   }
   
   // Base height + proportional height based on character count
   // Roughly 1px per 3 characters, with min 60px and max 300px
-  const baseHeight = 60;
+  const baseHeight = 40;
   const charCount = transcript.length;
   const proportionalHeight = Math.floor(charCount / 3);
   const totalHeight = baseHeight + proportionalHeight;
   
   // Clamp between min and max
-  return Math.min(Math.max(totalHeight, 60), 300);
+  return Math.min(Math.max(totalHeight, 40), 300);
 };
 
 export const Dashboard = () => {
@@ -156,23 +156,42 @@ export const Dashboard = () => {
         <section className="mt-8 rounded-2xl border border-rose-300/30 bg-rose-200/10 p-6 shadow-xl shadow-rose-300/20">
           <h2 className="text-xl font-semibold text-white">Upload audio</h2>
           <p className="mt-2 text-sm text-neutral-400">
-            Audio files only, up to 5MB.
+          Audio files only (MAX. 5MB)
           </p>
           <form
             onSubmit={handleUploadSubmit}
-            className="mt-4 flex flex-col gap-4 rounded-xl border border-dashed border-rose-300/40 p-4 bg-rose-200/10"
+            className="mt-4 flex flex-col gap-4"
           >
-            <input
-              type="file"
-              accept="audio/*"
-              onChange={handleFileChange}
-              className="text-sm text-neutral-400 file:mr-4 file:rounded-md file:border-0 file:bg-rose-300 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-neutral-950 hover:file:bg-rose-200"
-              disabled={isUploading}
-            />
+            <div className="group/upload relative flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-rose-300/40 bg-rose-200/10 p-8 transition-all duration-300 hover:border-rose-500/50 hover:bg-rose-200/20">
+              <div className="flex flex-col items-center text-center">
+                <svg className="mb-4 h-12 w-12 text-rose-400/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+                </svg>
+                <p className="mb-2 text-sm font-medium text-neutral-300">
+                  <span className="text-rose-400">Click to upload</span> or drag and drop
+                </p>
+              </div>
+              <input
+                type="file"
+                accept="audio/*"
+                onChange={handleFileChange}
+                className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+                disabled={isUploading}
+              />
+            </div>
+            
             {selectedFile ? (
-              <p className="text-xs text-neutral-400">
-                Selected: {selectedFile.name} ({(selectedFile.size / 1024 / 1024).toFixed(2)} MB)
-              </p>
+              <div className="rounded-lg border border-rose-300/30 bg-rose-200/10 px-4 py-3">
+                <div className="flex items-center space-x-3">
+                  <svg className="h-5 w-5 text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  <div>
+                    <p className="text-sm font-medium text-white">{selectedFile.name}</p>
+                    <p className="text-xs text-neutral-400">{(selectedFile.size / 1024 / 1024).toFixed(2)} MB</p>
+                  </div>
+                </div>
+              </div>
             ) : null}
             {uploadError ? (
               <p className="text-sm text-red-400">{uploadError}</p>
@@ -186,26 +205,33 @@ export const Dashboard = () => {
             </button>
           </form>
         </section>
+
         <section className="mt-8">
-      {showJobsButton && (
-        <button
-          type="button"
-          onClick={() => {setShowJobsButton(false); setJobsVisible(true)}}
-          className={`mx-auto flex w-1/2 items-center justify-center rounded-md bg-rose-300 px-4 py-2 text-base font-semibold text-neutral-950 transition hover:bg-rose-200 disabled:cursor-not-allowed disabled:opacity-60`}
-        >
-          Show jobs
-        </button>
-      )}
-      {!showJobsButton && (
-        <button
-          type="button"
-          onClick={() => {setShowJobsButton(true); setJobsVisible(false)}}
-          className={`mx-auto flex w-1/2 items-center justify-center rounded-md bg-red-400 px-4 py-2 text-base font-semibold text-white transition hover:bg-red-300 disabled:cursor-not-allowed disabled:opacity-60`}
-        >
-          Hide jobs
-        </button>
-      )}
-      </section>
+          {showJobsButton && (
+            <button
+              type="button"
+              onClick={() => {setShowJobsButton(false); setJobsVisible(true)}}
+              className="group flex items-center space-x-2 mx-auto w-1/2 justify-center rounded-lg border border-rose-300 bg-white px-6 py-3 text-sm font-semibold text-rose-600 shadow-sm transition-all duration-200 hover:border-rose-400 hover:bg-rose-50 hover:text-rose-700"
+            >
+              <span>View All Jobs</span>
+              <svg className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
+          )}
+          {!showJobsButton && (
+            <button
+              type="button"
+              onClick={() => {setShowJobsButton(true); setJobsVisible(false)}}
+              className="group flex items-center space-x-2 mx-auto w-1/2 justify-center rounded-lg border border-neutral-300 bg-white px-6 py-3 text-sm font-semibold text-neutral-600 shadow-sm transition-all duration-200 hover:border-neutral-400 hover:bg-neutral-50 hover:text-neutral-700"
+            >
+              <svg className="h-4 w-4 transition-transform duration-200 group-hover:-translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+              <span>Hide Jobs</span>
+            </button>
+          )}
+        </section>
       </div>
 
 
