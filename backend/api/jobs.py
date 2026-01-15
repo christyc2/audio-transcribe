@@ -7,7 +7,7 @@ from backend.database.model import Job
 from fastapi import HTTPException, status, UploadFile, Depends
 from backend.database.database import SessionLocal, get_db
 
-UPLOAD_DIR = Path("uploads")
+UPLOAD_DIR = Path(os.getenv("UPLOAD_DIR", "/uploads"))
 UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
 MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024  # 5MB

@@ -13,9 +13,13 @@ router = APIRouter(prefix="/auth", tags=["authentication"])
 # Registration endpoint
 @router.post("/register", response_model=User)
 async def register(user: User):
-    new_user = create_user(user)
-    # Return the original user data (not the database object)
-    return user
+    try:
+        new_user = create_user(user)
+        # Return the original user data (not the database object)
+        return user
+    except HTTPException as e:
+        # Re-raise HTTPException with original status code and detail
+        raise e
 
 # Login endpoint
 # Called when signing in with username and password and return access token (to be used during active duration)

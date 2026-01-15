@@ -1,13 +1,13 @@
 from celery import Celery
 import os
 
-# broker_url = os.getenv("CELERY_BROKER_URL")
-# result_backend = os.getenv("CELERY_RESULT_BACKEND_URL")
+broker_url = os.getenv("REDIS_BROKER_URL")
+result_backend = os.getenv("REDIS_BACKEND_URL")
 
 celery_app = Celery(
     "worker",
-    broker="redis://localhost:6379/0",
-    backend="redis://localhost:6379/0",
+    broker=broker_url,
+    backend=result_backend,
     include=["backend.celery.transcribe"]
 )
 
