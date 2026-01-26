@@ -1,14 +1,31 @@
 
-import type { UserJob } from '../api/jobs';
+import { useCallback, useEffect, useState } from 'react';
+import { fetchUserJobs, type UserJob } from '../api/jobs';
 
-type ResultProps = {
-  job?: UserJob | null;
-};
-
-export const Result = ({ job }: ResultProps) => {
+export const Result = () => {
   const [jobs, setJobs] = useState<UserJob[]>([]);
   const [jobsError, setJobsError] = useState<string | null>(null);
   const [jobsLoading, setJobsLoading] = useState(false);
+
+  const loadJobs = useCallback(async () => {
+    setJobsLoading(true);
+    setJobsError(null);
+
+    try {
+      const data = await fetchUserJobs();
+      setJobs(data);
+    } catch (error) {
+      setJobsError(
+        error instanceof Error ? error.message : 'Unable to load jobs.',
+      );
+    } finally {
+      setJobsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadJobs();
+  }, [loadJobs]);
 
 
   return (

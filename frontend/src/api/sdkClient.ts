@@ -39,9 +39,6 @@ let usersApiInstance: UsersApi | null = null;
 const getAuthApi = (): AuthenticationApi => {
   if (!authApiInstance) {
     authApiInstance = new AuthenticationApi(createConfiguration());
-  } else {
-    // Update configuration in case token changed
-    authApiInstance.configuration = createConfiguration();
   }
   return authApiInstance;
 };
@@ -49,9 +46,6 @@ const getAuthApi = (): AuthenticationApi => {
 const getUsersApi = (): UsersApi => {
   if (!usersApiInstance) {
     usersApiInstance = new UsersApi(createConfiguration());
-  } else {
-    // Update configuration in case token changed
-    usersApiInstance.configuration = createConfiguration();
   }
   return usersApiInstance;
 };
