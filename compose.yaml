@@ -57,10 +57,11 @@ services:
       DATABASE_URL: "${DATABASE_URL_DOCKER}"
       REDIS_BROKER_URL: "${REDIS_BROKER_URL}"
       REDIS_BACKEND_URL: "${REDIS_BACKEND_URL}"
-      UPLOAD_DIR: "/uploads"
+      S3_BUCKET: "${S3_BUCKET}"
+      AWS_ACCESS_KEY_ID: "${AWS_ACCESS_KEY_ID}"
+      AWS_SECRET_ACCESS_KEY: "${AWS_SECRET_ACCESS_KEY}"
+      AWS_DEFAULT_REGION: "${AWS_REGION}"
       SECRET_KEY: "${SECRET_KEY}"
-    volumes:
-      - ./uploads:/uploads
 
   worker:
     build: .
@@ -75,8 +76,10 @@ services:
       DATABASE_URL: "${DATABASE_URL_DOCKER}"
       REDIS_BROKER_URL: "${REDIS_BROKER_URL}"
       REDIS_BACKEND_URL: "${REDIS_BACKEND_URL}"
-    volumes:
-      - ./uploads:/uploads
+      S3_BUCKET: "${S3_BUCKET}"
+      AWS_ACCESS_KEY_ID: "${AWS_ACCESS_KEY_ID}"
+      AWS_SECRET_ACCESS_KEY: "${AWS_SECRET_ACCESS_KEY}"
+      AWS_DEFAULT_REGION: "${AWS_REGION}"
     command: ["celery", "-A", "backend.celery.celery_app", "worker", "--pool=solo", "--loglevel=INFO"]
   
   frontend:
