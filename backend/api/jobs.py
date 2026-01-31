@@ -1,14 +1,15 @@
 import os
+import boto3
 import uuid
-from pathlib import Path
 from typing import List
 from uuid import UUID
 from backend.database.model import Job
 from fastapi import HTTPException, status, UploadFile, Depends
 from backend.database.database import SessionLocal, get_db
 
-UPLOAD_DIR = Path(os.getenv("UPLOAD_DIR", "/uploads"))
-UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+s3 = boto3.client("s3")
+UPLOAD_DIR = os.environ["S3_BUCKET"]
+
 
 MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024  # 5MB
 ALLOWED_CONTENT_PREFIX = "audio/"
@@ -38,12 +39,9 @@ async def create_job(owner: UUID, file: UploadFile, db: SessionLocal = Depends(g
     original_name = file.filename or "audio-file"
     extension = os.path.splitext(original_name)[1]
     stored_filename = f"{job_id}{extension}"
-    saved_path = UPLOAD_DIR / stored_filename
 
-    # opens/create the file in binary write mode
-    with open(saved_path, "wb") as buffer:
-        # write raw bytes from file.read() to filesystem
-        buffer.write(contents)
+    # Upload to S3
+    s3.put_object(Bucket=UPLOAD_DIR, Key=stored_filename, Body=contents)
 
     job = Job(
         filename=original_name,
@@ -68,7 +66,7 @@ async def create_job(owner: UUID, file: UploadFile, db: SessionLocal = Depends(g
     to avoid blocking. When the transcription is complete, the result will be updated 
     in the Redis result backend by the worker.
     """
-    transcribe_audio.delay(job_id, str(saved_path)) 
+    transcribe_audio.delay(job_id, str(stored_filename)) 
 
     return {
         "job_id": job_id,
