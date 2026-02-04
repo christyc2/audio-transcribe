@@ -262,6 +262,30 @@ Improvement: Move from in-memory stores to durable Postgres database.
     - frontend code must be compiled: do not use npm run dev use npm run build
         - compressed (more efficient) and safer (harder to decode source code)
 
+## Cloud Deployment (AWS)
+1. General workflow:
+    - API will accept file uploads
+    - Save files to S3
+    - Store job metadata in RDS
+    - Push jobs to Redis / SQS
+    - Worker reads from Redis/SQS, pulls file from S3, processes it, writes result to DB/S3
+
+<!--Backend project
+
+Designed and deployed a containerized FastAPI backend on AWS ECS (Fargate) with PostgreSQL on RDS, Redis caching via ElastiCache, and secrets stored in AWS Secrets Manager
+
+Infra
+
+Built CI/CD pipeline using GitHub Actions to build Docker images, push to AWS ECR, and automatically deploy to ECS
+
+Architecture
+
+Configured Application Load Balancer, IAM roles, and security groups for secure service-to-database communication inside a VPC
+
+Monitoring
+
+Implemented logging and health checks using AWS CloudWatch for ECS tasks -->
+
 <!-- ## End-to-End Workflows
 - Registration: frontend form → `/auth/register` → storage update.
 - Login: credential submission, middleware check, JWT issuance, client persistence.
