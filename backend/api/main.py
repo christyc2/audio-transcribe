@@ -21,8 +21,8 @@ app = FastAPI()
 origins = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
-    "audio-transcribe-five.vercel.app",
-    "audio-transcribe-christyc2s-projects.vercel.app"
+    "https://audio-transcribe-five.vercel.app",
+    "https://audio-transcribe-christyc2s-projects.vercel.app"
 ]
 
 app.add_middleware(
@@ -36,6 +36,10 @@ app.add_middleware(
 app.include_router(authentication.router)
 app.include_router(users.router)
 app.add_middleware(AuthMiddleware)
+
+@app.get("/health")
+def health_check():
+    return {"status": "healthy"}
 
 if __name__ == "__main__":
     uvicorn.run(app, port=8000)
