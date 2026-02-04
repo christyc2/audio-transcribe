@@ -25,7 +25,8 @@ export const NavBar = () => {
   return (
     <header className="border-b border-rose-300/20 bg-neutral-950/80 backdrop-blur">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4 text-white">
-        <Link to="/" className="text-lg font-semibold tracking-tight text-white">
+        <Link to="/" className="flex items-center gap-2 text-lg font-semibold tracking-tight text-white">
+          <img src="/logo.png" alt="Logo" className="h-6 w-6" />
           Audio Transcribe
         </Link>
         <nav className="flex items-center gap-4 text-sm font-medium">
